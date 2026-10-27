@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpendSense Next — Interactive Prototype</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    /* Custom scrollbar for mobile frame */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    /* Device frame styling */
+    .mobile-frame {
+      width: 400px;
+      height: 840px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 12px #181c24, 0 0 0 14px #2a3342;
+    }
+
+    .tabular-num {
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+</head>
+<body class="bg-[#0b0f17] text-slate-100 flex items-center justify-center min-h-screen p-4 font-sans select-none antialiased">
+
+  <!-- Interactive Device Shell -->
+  <div class="mobile-frame bg-[#101520] rounded-[48px] overflow-hidden flex flex-col relative border border-slate-800">
+    
+    <!-- Status Bar -->
+    <div class="pt-3 px-7 pb-2 flex justify-between items-center text-xs text-slate-400 font-medium z-30">
+      <span>9:41</span>
+      <!-- Dynamic Island / Speaker Notch -->
+      <div class="w-24 h-5 bg-black rounded-full flex items-center justify-center">
+        <div class="w-2 h-2 rounded-full bg-emerald-500/80 mr-2 animate-pulse"></div>
+        <div class="w-3 h-3 rounded-full bg-slate-900 border border-slate-800"></div>
+      </div>
+      <div class="flex items-center space-x-1.5">
+        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19.4c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l1.9-1.9C9.27 19.68 10.59 20 12 20c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 15c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/></svg>
+        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>
+        <div class="w-5 h-2.5 border border-slate-400 rounded-sm p-0.5 flex items-center">
+          <div class="w-full h-full bg-slate-200 rounded-xs"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Inflow Alert Pill (Simulating SMS Reconciliation) -->
+    <div id="reconcileToast" class="absolute top-12 left-4 right-4 z-40 bg-emerald-950/90 border border-emerald-500/40 backdrop-blur-md rounded-2xl p-3 shadow-2xl flex items-center justify-between transition-all duration-300 transform -translate-y-20 opacity-0 pointer-events-none">
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-base">₹</div>
+        <div>
+          <div class="text-xs font-semibold text-emerald-300 flex items-center gap-1.5">
+            Credit SMS Detected
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+          </div>
+          <div class="text-xs text-slate-300">₹12,000 from <strong class="text-white">Rahul</strong></div>
+        </div>
+      </div>
+      <button onclick="handleReconcile()" class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-bold text-xs rounded-xl shadow transition">
+        Match Split
+      </button>
+    </div>
+
+    <!-- MAIN SCROLLABLE CONTENT AREA -->
+    <div class="flex-1 overflow-y-auto no-scrollbar pb-24 px-5 pt-1" id="screenContainer">
+      
+      <!-- ================= SCREEN 1: DASHBOARD ================= -->
+      <div id="screen-dashboard" class="space-y-5">
+        
+        <!-- Header -->
+        <div class="flex justify-between items-center pt-2">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-semibold tracking-wider uppercase text-slate-400">October 2026</span>
+              <!-- Currency Switcher Pill -->
+              <select id="currencySelector" onchange="changeCurrency(this.value)" class="bg-slate-900 text-amber-400 font-bold border border-slate-700 rounded-lg px-1.5 py-0.5 text-[11px] outline-none cursor-pointer hover:border-amber-400 transition">
+                <option value="₹" selected>₹ INR</option>
+                <option value="$">$ USD</option>
+                <option value="€">€ EUR</option>
+                <option value="£">£ GBP</option>
+                <option value="AED ">AED</option>
+              </select>
+            </div>
+            <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-1.5 mt-0.5">
+              Cash Flow Pulse
+              <span class="text-emerald-400 text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 font-medium">On Track</span>
+            </h1>
+          </div>
+          <button onclick="triggerCreditSim()" title="Simulate incoming UPI credit" class="p-2 rounded-2xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700 flex items-center gap-1 text-xs">
+            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+            <span class="hidden sm:inline">Simulate Inflow</span>
+          </button>
+        </div>
+
+        <!-- Net vs Gross Card (The True-Cost Hero) -->
+        <div class="p-5 rounded-3xl bg-gradient-to-br from-[#182132] to-[#121824] border border-slate-700/60 shadow-xl relative overflow-hidden">
+          <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
+          
+          <div class="flex justify-between items-start mb-3">
+            <div>
+              <span class="text-xs text-slate-400 font-medium">True Net Expense (My Burn)</span>
+              <div class="text-3xl font-extrabold text-white tracking-tight tabular-num mt-0.5" id="netSpendVal">₹24,850</div>
+            </div>
+            <div class="text-right">
+              <span class="text-[11px] text-slate-400 font-medium block">Gross Outflow</span>
+              <span class="text-xs font-semibold text-slate-300 tabular-num" id="grossSpendVal">₹46,350</span>
+            </div>
+          </div>
+
+          <!-- Split Progress Bar -->
+          <div class="space-y-1.5 pt-2 border-t border-slate-700/50">
+            <div class="flex justify-between text-xs font-medium">
+              <span class="text-amber-300 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                Money Waiting to Return
+              </span>
+              <span class="text-amber-300 font-bold tabular-num" id="receivableHeroVal">₹21,500</span>
+            </div>
+            <div class="w-full h-2 rounded-full bg-slate-800 overflow-hidden flex">
+              <div class="h-full bg-slate-400 w-[54%]" title="True Personal Burn"></div>
+              <div class="h-full bg-amber-400 w-[46%]" title="Waiting to come back"></div>
+            </div>
+            <div class="flex justify-between text-[10px] text-slate-500 pt-0.5">
+              <span>54% Personal Outlay</span>
+              <span>46% Reimbursable Splits</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Household Due Reminders (Cook / Maid / Rent) -->
+        <div>
+          <div class="flex justify-between items-center mb-2.5">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Upcoming Household Payroll</h2>
+            <span class="text-[11px] text-slate-400">3 obligations</span>
+          </div>
+
+          <div class="space-y-2">
+            <!-- Rent Reminder -->
+            <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 flex items-center justify-between transition">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center text-lg">🏠</div>
+                <div>
+                  <div class="text-sm font-semibold text-white">Flat Rent & Maintenance</div>
+                  <div class="text-xs text-amber-400 font-medium">Due in 5 days (1st Nov) • Split 3 ways</div>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-sm font-bold text-white tabular-num">₹32,000</div>
+                <button onclick="payRent()" class="text-[11px] font-semibold text-emerald-400 hover:underline">Pay & Split →</button>
+              </div>
+            </div>
+
+            <!-- Cook Salary -->
+            <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 flex items-center justify-between transition">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center text-lg">🍳</div>
+                <div>
+                  <div class="text-sm font-semibold text-white">Cook Salary (Ramesh)</div>
+                  <div class="text-xs text-slate-400">Due 1st Nov • Monthly Payroll</div>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-sm font-bold text-white tabular-num">₹4,000</div>
+                <span class="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-300">Set auto</span>
+              </div>
+            </div>
+
+            <!-- Maid Salary -->
+            <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 flex items-center justify-between transition">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center text-lg">🧹</div>
+                <div>
+                  <div class="text-sm font-semibold text-white">Maid Salary (Sunita)</div>
+                  <div class="text-xs text-slate-400">Due 2nd Nov • 50/50 Split</div>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-sm font-bold text-white tabular-num">₹2,500</div>
+                <span class="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-300">Ready</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Credit Card Exposure Meter -->
+        <div class="p-4 rounded-3xl bg-[#141b27] border border-slate-800">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Credit Card Cycle Watch</span>
+            <span class="text-xs font-semibold text-emerald-400">22% Safe Utilization</span>
+          </div>
+
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <div class="text-sm font-bold text-white">HDFC Regalia Gold</div>
+              <div class="text-xs text-slate-400">Statement generates in 8 days</div>
+            </div>
+            <div class="text-right">
+              <div class="text-sm font-bold text-white tabular-num">₹38,420</div>
+              <div class="text-[11px] text-slate-400">Limit: ₹2,50,000</div>
+            </div>
+          </div>
+          <div class="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+            <div class="h-full bg-emerald-400 w-[22%]"></div>
+          </div>
+        </div>
+
+        <!-- Recent Transactions Live Feed -->
+        <div>
+          <div class="flex justify-between items-center mb-2.5">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Recent Stream</h2>
+            <span class="text-xs text-emerald-400 font-semibold cursor-pointer">View All</span>
+          </div>
+
+          <div class="space-y-2">
+            <!-- Transaction 1: Uber Cab with Split -->
+            <div class="p-3 rounded-2xl bg-slate-900/60 border border-slate-800/80 flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-xl bg-slate-800 text-slate-200 flex items-center justify-center text-sm">🚕</div>
+                <div>
+                  <div class="text-xs font-bold text-white">Uber Premier • Airport</div>
+                  <div class="flex items-center gap-1.5 text-[11px] text-slate-400">
+                    <span class="text-blue-400">HDFC CC</span> •
+                    <span class="text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded text-[10px]">Split w/ Flatmate</span>
+                  </div>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-xs font-bold text-white tabular-num">-₹1,450</div>
+                <div class="text-[10px] text-emerald-400">Net: -₹725</div>
+              </div>
+            </div>
+
+            <!-- Transaction 2: SIP Investment -->
+            <div class="p-3 rounded-2xl bg-slate-900/60 border border-slate-800/80 flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-sm">📈</div>
+                <div>
+                  <div class="text-xs font-bold text-white">Parag Parikh Flexi Cap</div>
+                  <div class="text-[11px] text-slate-400">Automated SIP • Wealth Asset</div>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-xs font-bold text-emerald-400 tabular-num">₹10,000</div>
+                <div class="text-[10px] text-slate-500">Auto-debited</div>
+              </div>
+            </div>
+
+            <!-- Transaction 3: Girlfriend Gift / Purchase -->
+            <div class="p-3 rounded-2xl bg-slate-900/60 border border-slate-800/80 flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-xl bg-pink-500/10 text-pink-400 flex items-center justify-center text-sm">🎁</div>
+                <div>
+                  <div class="text-xs font-bold text-white">Zara • Weekend Dinner & Jacket</div>
+                  <div class="text-[11px] text-pink-400 font-medium">Tag: Girlfriend Ledger</div>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-xs font-bold text-white tabular-num">-₹4,200</div>
+                <div class="text-[10px] text-slate-400">Deficit: +₹4,200</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ================= SCREEN 2: PENDING IN (RECEIVABLES & SPLITS) ================= -->
+      <div id="screen-splits" class="hidden space-y-5">
+        
+        <div class="pt-2 flex justify-between items-center">
+          <div>
+            <div class="text-xs font-semibold tracking-wider uppercase text-amber-400">Receivables Ledger</div>
+            <h1 class="text-xl font-bold tracking-tight text-white">Money In Waiting</h1>
+          </div>
+          <button onclick="openAddIouModal()" class="px-3 py-1.5 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs flex items-center gap-1 shadow-md hover:bg-amber-400">
+            <span>+</span> Explicit IOU
+          </button>
+        </div>
+
+        <!-- Total Receivables Banner -->
+        <div class="p-5 rounded-3xl bg-gradient-to-br from-amber-950/40 via-slate-900 to-slate-900 border border-amber-500/30">
+          <div class="text-xs text-amber-300 font-medium">Total Owed Back to You</div>
+          <div class="text-3xl font-extrabold text-white mt-1 tabular-num" id="totalOwedVal">₹21,500</div>
+          <p class="text-xs text-slate-400 mt-1">Across 3 people & 1 pending merchant return. Independent of calendar months.</p>
+        </div>
+
+        <!-- SECTION: People Breakdown -->
+        <div class="space-y-3">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">People Ledgers</h2>
+
+          <!-- Person 1: Rahul (Flatmate) -->
+          <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full bg-blue-600/20 text-blue-400 font-bold flex items-center justify-center border border-blue-500/30">RK</div>
+                <div>
+                  <div class="text-sm font-bold text-white">Rahul Kumar (Flatmate)</div>
+                  <div class="text-xs text-slate-400">2 open splits</div>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-sm font-bold text-amber-400 tabular-num" id="rahulDebtVal">₹12,000</div>
+                <span class="text-[10px] text-slate-400">Owes you</span>
+              </div>
+            </div>
+
+            <!-- Nested breakdown -->
+            <div class="text-xs bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80 space-y-1.5">
+              <div class="flex justify-between text-slate-300">
+                <span>Oct Flat Rent Share</span>
+                <span class="font-medium text-white tabular-num">₹10,666</span>
+              </div>
+              <div class="flex justify-between text-slate-300">
+                <span>Airtel Xstream Wifi (3 months)</span>
+                <span class="font-medium text-white tabular-num">₹1,334</span>
+              </div>
+            </div>
+
+            <div class="flex gap-2">
+              <button onclick="nudgeWhatsApp('Rahul', '₹12,000')" class="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl text-center">
+                💬 WhatsApp Nudge
+              </button>
+              <button onclick="manualSettle('Rahul')" class="py-1.5 px-3 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold rounded-xl">
+                Settle
+              </button>
+            </div>
+          </div>
+
+          <!-- Person 2: Girlfriend (Ananya) -->
+          <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full bg-pink-600/20 text-pink-400 font-bold flex items-center justify-center border border-pink-500/30">❤️</div>
+                <div>
+                  <div class="text-sm font-bold text-white">Ananya (Partner Ledger)</div>
+                  <div class="text-xs text-slate-400">Shared & Family Outflows</div>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-sm font-bold text-amber-400 tabular-num">₹4,200</div>
+                <span class="text-[10px] text-pink-400 font-medium">Deficit to adjust</span>
+              </div>
+            </div>
+
+            <p class="text-xs text-slate-400 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
+              Purchased Zara jacket on HDFC CC. When she transfers ₹5,000, excess ₹800 will carry over into your ledger balance.
+            </p>
+          </div>
+
+          <!-- Person 3: Vikram (Explicit IOU) -->
+          <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-full bg-purple-600/20 text-purple-400 font-bold flex items-center justify-center border border-purple-500/30">VK</div>
+              <div>
+                <div class="text-sm font-bold text-white">Vikram S.</div>
+                <div class="text-xs text-slate-400">Coldplay Ticket Booking</div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-sm font-bold text-amber-400 tabular-num">₹3,400</div>
+              <span class="text-[10px] text-slate-400">Added manually</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION: Pending Returns / Refunds -->
+        <div class="space-y-3">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Pending Merchant Refunds</h2>
+
+          <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-400 font-bold flex items-center justify-center border border-orange-500/20">📦</div>
+              <div>
+                <div class="text-sm font-bold text-white">Amazon India Return</div>
+                <div class="text-xs text-slate-400">Puma Shoes • Return picked up</div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-sm font-bold text-emerald-400 tabular-num">₹1,900</div>
+              <span class="text-[10px] text-slate-400">Awaiting credit SMS</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ================= SCREEN 3: CARDS & STATEMENT CYCLES ================= -->
+      <div id="screen-cards" class="hidden space-y-5">
+        <div class="pt-2">
+          <div class="text-xs font-semibold tracking-wider uppercase text-slate-400">Payment Instruments</div>
+          <h1 class="text-xl font-bold tracking-tight text-white">Cards & Cycles</h1>
+        </div>
+
+        <!-- Card 1: HDFC Regalia Gold -->
+        <div class="p-5 rounded-3xl bg-gradient-to-tr from-slate-900 via-blue-950 to-slate-900 border border-blue-500/30 shadow-2xl space-y-4">
+          <div class="flex justify-between items-start">
+            <div>
+              <div class="text-xs font-bold tracking-wider text-blue-300">HDFC BANK</div>
+              <div class="text-lg font-bold text-white mt-0.5">Regalia Gold •••• 4092</div>
+            </div>
+            <span class="text-xs px-2.5 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 font-semibold">Primary</span>
+          </div>
+
+          <div class="flex justify-between items-end pt-2">
+            <div>
+              <div class="text-xs text-slate-400">Current Unbilled Spend</div>
+              <div class="text-2xl font-black text-white tabular-num">₹38,420</div>
+            </div>
+            <div class="text-right">
+              <div class="text-xs text-slate-400">Limit: ₹2,50,000</div>
+              <div class="text-xs font-bold text-emerald-400">₹2,11,580 Available</div>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-800 space-y-1.5">
+            <div class="flex justify-between text-xs text-slate-300">
+              <span>Cycle: 15th to 14th</span>
+              <span class="text-amber-400 font-semibold">Statement in 8 days</span>
+            </div>
+            <div class="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+              <div class="h-full bg-blue-500 w-[15%]"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: SBI Cashback Card -->
+        <div class="p-5 rounded-3xl bg-gradient-to-tr from-slate-900 via-emerald-950/40 to-slate-900 border border-emerald-500/20 shadow-2xl space-y-4">
+          <div class="flex justify-between items-start">
+            <div>
+              <div class="text-xs font-bold tracking-wider text-emerald-300">SBI CARD</div>
+              <div class="text-lg font-bold text-white mt-0.5">Cashback Card •••• 8812</div>
+            </div>
+            <span class="text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 font-semibold">Online 5%</span>
+          </div>
+
+          <div class="flex justify-between items-end pt-2">
+            <div>
+              <div class="text-xs text-slate-400">Current Unbilled Spend</div>
+              <div class="text-2xl font-black text-white tabular-num">₹9,840</div>
+            </div>
+            <div class="text-right">
+              <div class="text-xs text-slate-400">Limit: ₹1,20,000</div>
+              <div class="text-xs font-bold text-emerald-400">Safe</div>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-800 space-y-1.5">
+            <div class="flex justify-between text-xs text-slate-300">
+              <span>Cycle: 1st to 30th</span>
+              <span class="text-slate-400">Due: 20th Nov</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bank Accounts & UPI -->
+        <div>
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5">Bank & UPI Handles</h2>
+          <div class="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold">HDFC</div>
+              <div>
+                <div class="text-sm font-semibold text-white">Salary Account •••• 5591</div>
+                <div class="text-xs text-slate-400">ayush@okhdfcbank</div>
+              </div>
+            </div>
+            <span class="text-xs font-bold text-emerald-400">Active Listener</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- QUICK ADD EXPENSE MODAL (HIDDEN BY DEFAULT) -->
+    <div id="addModal" class="absolute inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex flex-col justify-end">
+      <div class="bg-[#141b27] border-t border-slate-700 rounded-t-[36px] p-6 space-y-4">
+        <div class="flex justify-between items-center">
+          <h3 class="text-base font-bold text-white">Log Expense with Split</h3>
+          <button onclick="closeAddModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
+        </div>
+
+        <!-- Amount Input -->
+        <div>
+          <label class="text-[11px] uppercase tracking-wider text-slate-400 font-bold block mb-1">Amount Spent</label>
+          <div class="flex items-center bg-slate-900 rounded-2xl px-4 py-3 border border-slate-800">
+            <span class="text-emerald-400 font-bold text-xl mr-2">₹</span>
+            <input type="number" id="inputAmount" placeholder="0.00" class="bg-transparent text-white font-bold text-xl outline-none w-full" value="3000">
+          </div>
+        </div>
+
+        <!-- Category Pills -->
+        <div>
+          <label class="text-[11px] uppercase tracking-wider text-slate-400 font-bold block mb-1.5">Category</label>
+          <div class="flex flex-wrap gap-2 text-xs">
+            <span class="px-3 py-1.5 rounded-xl bg-blue-500/20 text-blue-300 border border-blue-500/40 font-semibold cursor-pointer">🏠 Rent</span>
+            <span class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 cursor-pointer">🍳 Cook / Maid</span>
+            <span class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 cursor-pointer">🚕 Cab / Auto</span>
+            <span class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 cursor-pointer">🎁 Girlfriend</span>
+            <span class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 cursor-pointer">📈 SIP</span>
+          </div>
+        </div>
+
+        <!-- Split Toggle Box -->
+        <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-amber-500/30 space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="text-xs font-bold text-amber-300">Split This Expense?</span>
+            <input type="checkbox" id="splitToggle" checked class="accent-amber-400 w-4 h-4">
+          </div>
+          <div class="flex gap-2">
+            <input type="text" placeholder="Person name (e.g. Rahul)" value="Rahul" class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white">
+            <input type="number" placeholder="Expected ₹" value="1500" class="w-28 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white tabular-num">
+          </div>
+          <span class="text-[10px] text-slate-400 block">Your true expense will only be ₹1,500</span>
+        </div>
+
+        <!-- Action Button -->
+        <button onclick="saveExpense()" class="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 font-bold text-slate-950 rounded-2xl text-sm shadow-xl transition active:scale-98">
+          Save & Track Split
+        </button>
+      </div>
+    </div>
+
+    <!-- BOTTOM NAVIGATION (THUMB ZONE) -->
+    <div class="absolute bottom-0 left-0 right-0 h-20 bg-[#121722]/95 border-t border-slate-800/80 backdrop-blur-md px-6 flex justify-between items-center z-30">
+      
+      <!-- Tab 1: Home -->
+      <button onclick="switchTab('dashboard')" id="tab-dashboard" class="flex flex-col items-center space-y-1 text-emerald-400">
+        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        <span class="text-[10px] font-bold tracking-tight">Today</span>
+      </button>
+
+      <!-- Tab 2: Pending In (Receivables) -->
+      <button onclick="switchTab('splits')" id="tab-splits" class="flex flex-col items-center space-y-1 text-slate-400 hover:text-white">
+        <div class="relative">
+          <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+          <span class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-400"></span>
+        </div>
+        <span class="text-[10px] font-medium tracking-tight">Pending In</span>
+      </button>
+
+      <!-- FAB: Quick Add Button -->
+      <button onclick="openAddModal()" class="w-12 h-12 rounded-2xl bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-bold flex items-center justify-center text-2xl shadow-lg shadow-emerald-500/20 -mt-5 transition">
+        +
+      </button>
+
+      <!-- Tab 3: Cards -->
+      <button onclick="switchTab('cards')" id="tab-cards" class="flex flex-col items-center space-y-1 text-slate-400 hover:text-white">
+        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
+        <span class="text-[10px] font-medium tracking-tight">Cards</span>
+      </button>
+
+      <!-- Tab 4: Ledger -->
+      <button onclick="switchTab('splits')" class="flex flex-col items-center space-y-1 text-slate-400 hover:text-white">
+        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+        <span class="text-[10px] font-medium tracking-tight">Family</span>
+      </button>
+
+    </div>
+
+  </div>
+
+  <!-- INTERACTIVE SCRIPT LOGIC -->
+  <script>
+    // Tab switching
+    function switchTab(tabId) {
+      const screens = ['dashboard', 'splits', 'cards'];
+      screens.forEach(s => {
+        const el = document.getElementById('screen-' + s);
+        const btn = document.getElementById('tab-' + s);
+        if (s === tabId) {
+          el.classList.remove('hidden');
+          if (btn) {
+            btn.classList.add('text-emerald-400');
+            btn.classList.remove('text-slate-400');
+          }
+        } else {
+          el.classList.add('hidden');
+          if (btn) {
+            btn.classList.remove('text-emerald-400');
+            btn.classList.add('text-slate-400');
+          }
+        }
+      });
+    }
+
+    // Simulate incoming credit notification
+    function triggerCreditSim() {
+      const toast = document.getElementById('reconcileToast');
+      toast.classList.remove('-translate-y-20', 'opacity-0', 'pointer-events-none');
+      toast.classList.add('translate-y-0', 'opacity-100');
+    }
+
+    // Reconcile / Match split action
+    function handleReconcile() {
+      const toast = document.getElementById('reconcileToast');
+      toast.classList.add('-translate-y-20', 'opacity-0', 'pointer-events-none');
+      
+      // Update numbers in DOM
+      document.getElementById('receivableHeroVal').innerText = '₹9,500';
+      document.getElementById('totalOwedVal').innerText = '₹9,500';
+      document.getElementById('rahulDebtVal').innerText = '₹0 (Settled)';
+      document.getElementById('rahulDebtVal').classList.remove('text-amber-400');
+      document.getElementById('rahulDebtVal').classList.add('text-emerald-400');
+      
+      alert('🎉 Haptic Feedback: ₹12,000 received from Rahul matched! Rahul debt settled and removed from Pending In.');
+    }
+
+    // Dynamic Currency Switcher
+    let currentSymbol = '₹';
+    function changeCurrency(sym) {
+      currentSymbol = sym;
+      const amountElements = [
+        'netSpendVal', 'grossSpendVal', 'receivableHeroVal', 'totalOwedVal', 'rahulDebtVal'
+      ];
+      amountElements.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.innerText = el.innerText.replace(/^[^\d]+/, sym);
+        }
+      });
+      alert('Base currency switched to ' + sym + '. All metrics, ledgers, and cards now format in ' + sym);
+    }
+
+    // Modal controls
+    function openAddModal() {
+      document.getElementById('addModal').classList.remove('hidden');
+    }
+
+    function closeAddModal() {
+      document.getElementById('addModal').classList.add('hidden');
+    }
+
+    function saveExpense() {
+      closeAddModal();
+      alert('Expense recorded! Net spend updated, and split expectation added to Rahul.');
+    }
+
+    function payRent() {
+      alert('Rent payment flow triggered: Paid ₹32,000 via HDFC Credit Card. Auto-created ₹10,666 split requests for Flatmate 1 & Flatmate 2.');
+    }
+
+    function nudgeWhatsApp(person, amount) {
+      alert('Opened WhatsApp with prompt: "Hey ' + person + ', just sharing the split for flat expenses (' + amount + '). Whenever you get a chance!"');
+    }
+
+    function manualSettle(person) {
+      alert(person + ' marked as settled manually.');
+    }
+  </script>
+
+</body>
+</html>

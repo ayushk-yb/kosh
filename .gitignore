@@ -1,0 +1,22 @@
+# Built application files
+*.apk
+!release/*.apk
+*.aab
+*.ap_
+
+# Exclude generated / build artifacts
+*.iml
+.gradle
+/local.properties
+/.idea/
+.DS_Store
+/build
+*/build
+.cxx/
+captures/
+.externalNativeBuild/
+
+# OS / Editor files
+Thumbs.db
+*.swp
+*.bak

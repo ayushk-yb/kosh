@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Ambient circular orbit -->
+    <path
+        android:pathData="M54,18 A36,36 0 1 0 54,90 A36,36 0 1 0 54,18"
+        android:strokeWidth="1.5"
+        android:strokeColor="#2810B981"
+        android:fillColor="#00000000" />
+
+    <!-- Hexagon Shield Surface -->
+    <path
+        android:pathData="M54,24 L79,38.5 L79,67.5 L54,82 L29,67.5 L29,38.5 Z"
+        android:fillColor="#141C2A"
+        android:strokeWidth="1.5"
+        android:strokeColor="#5010B981" />
+
+    <!-- "K" - Vertical Stem (Electric Mint) -->
+    <path
+        android:pathData="M42,39 L42,67"
+        android:strokeWidth="6.5"
+        android:strokeColor="#10B981"
+        android:strokeLineCap="round" />
+
+    <!-- "K" - Upper Branch (Emerald Mint) -->
+    <path
+        android:pathData="M44,53 L64,39"
+        android:strokeWidth="6.0"
+        android:strokeColor="#34D399"
+        android:strokeLineCap="round" />
+
+    <!-- "K" - Lower Branch (Amber Gold) -->
+    <path
+        android:pathData="M44,53 L64,67"
+        android:strokeWidth="6.0"
+        android:strokeColor="#F59E0B"
+        android:strokeLineCap="round" />
+</vector>
