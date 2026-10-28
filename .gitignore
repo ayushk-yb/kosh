@@ -20,3 +20,7 @@ captures/
 Thumbs.db
 *.swp
 *.bak
+
+# Internal session handoff notes
+*HANDOFF*.md
+*handoff*.md
