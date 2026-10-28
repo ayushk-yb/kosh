@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import com.kosh.app.data.model.Currency
 import com.kosh.app.data.model.PaymentInstrumentEntity
 import com.kosh.app.data.model.TransactionEntity
+import com.kosh.app.data.model.isCreditOrInflow
 import com.kosh.app.ui.theme.AmberGold
 import com.kosh.app.ui.theme.CardBorder
 import com.kosh.app.ui.theme.ElectricMint
@@ -150,9 +151,16 @@ fun CardsScreen(
                     val card = creditCards[idx]
                     val dynamicSpend = androidx.compose.runtime.remember(card, transactions) {
                         val sum = transactions.filter { tx ->
-                            !tx.isAssetWealth && (
-                                tx.instrumentName.equals(card.bankName, ignoreCase = true) ||
-                                tx.instrumentName.contains(card.last4Digits)
+                            !tx.isAssetWealth && !tx.isCreditOrInflow() && (
+                                (card.last4Digits.isNotBlank() && (
+                                    tx.instrumentName.contains(card.last4Digits) ||
+                                    (tx.originalSms != null && tx.originalSms.contains(card.last4Digits)) ||
+                                    tx.note.contains(card.last4Digits)
+                                )) ||
+                                (card.last4Digits.isBlank() && (
+                                    tx.instrumentName.equals(card.cardOrAccountName, ignoreCase = true) ||
+                                    tx.instrumentName.equals(card.bankName, ignoreCase = true)
+                                ))
                             )
                         }.sumOf { it.trueNetAmount }
                         if (sum > 0) sum else card.unbilledSpend
@@ -341,10 +349,13 @@ fun BankAccountItem(
     onClick: () -> Unit = {}
 ) {
     val upiSpend = transactions.filter { tx ->
-        !tx.isAssetWealth && (
-            tx.instrumentName.contains("UPI", ignoreCase = true) ||
-            tx.instrumentName.contains(bank.bankName, ignoreCase = true) ||
-            (bank.upiHandle?.isNotBlank() == true && tx.instrumentName.contains(bank.upiHandle))
+        !tx.isAssetWealth && !tx.isCreditOrInflow() && (
+            (bank.last4Digits.isNotBlank() && (
+                tx.instrumentName.contains(bank.last4Digits) ||
+                (tx.originalSms != null && tx.originalSms.contains(bank.last4Digits))
+            )) ||
+            (bank.upiHandle?.isNotBlank() == true && tx.instrumentName.contains(bank.upiHandle)) ||
+            (bank.last4Digits.isBlank() && bank.upiHandle.isNullOrBlank() && tx.instrumentName.contains(bank.bankName, ignoreCase = true))
         )
     }.sumOf { it.trueNetAmount }
 

@@ -14,6 +14,9 @@ interface PaymentInstrumentDao {
     @Query("SELECT * FROM credit_card_accounts ORDER BY id ASC")
     fun getAllInstrumentsFlow(): Flow<List<PaymentInstrumentEntity>>
 
+    @Query("SELECT * FROM credit_card_accounts ORDER BY id ASC")
+    suspend fun getAllInstrumentsList(): List<PaymentInstrumentEntity>
+
     @Query("SELECT * FROM credit_card_accounts WHERE instrumentType = 'CREDIT_CARD'")
     fun getCreditCardsFlow(): Flow<List<PaymentInstrumentEntity>>
 

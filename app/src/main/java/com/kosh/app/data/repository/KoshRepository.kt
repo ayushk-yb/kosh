@@ -957,6 +957,30 @@ class KoshRepository(
         return deletedCount
     }
 
+    suspend fun insertTransaction(tx: TransactionEntity): Long {
+        return db.transactionDao().insertTransaction(tx)
+    }
+
+    suspend fun cleanupCorruptedInstruments(): Int {
+        val instruments = db.paymentInstrumentDao().getAllInstrumentsList()
+        var count = 0
+        for (inst in instruments) {
+            if (inst.bankName.equals("Bank Credit", ignoreCase = true)) {
+                db.paymentInstrumentDao().deleteInstrument(inst)
+                count++
+            } else if (inst.instrumentType == "CREDIT_CARD" && inst.cardOrAccountName.contains("Account", ignoreCase = true)) {
+                db.paymentInstrumentDao().updateInstrument(
+                    inst.copy(
+                        instrumentType = "BANK_ACCOUNT",
+                        creditLimit = 0.0
+                    )
+                )
+                count++
+            }
+        }
+        return count
+    }
+
     companion object {
         private const val KEY_CURRENCY_CODE = "key_currency_code"
         private const val KEY_ONBOARDING_DONE = "key_onboarding_done"

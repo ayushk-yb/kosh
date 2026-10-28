@@ -1130,6 +1130,53 @@ fun EditTransactionBottomSheet(
                 )
             )
 
+            // Original Bank SMS Preview
+            if (!transaction.originalSms.isNullOrBlank()) {
+                val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
+                var copied by remember { mutableStateOf(false) }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Color(0xFF0F1521))
+                        .border(1.dp, CardBorder, RoundedCornerShape(14.dp))
+                        .padding(14.dp)
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "📩 ORIGINAL BANK SMS",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = AmberGold,
+                                letterSpacing = 1.sp
+                            )
+                            Text(
+                                text = if (copied) "Copied!" else "Copy",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = ElectricMint,
+                                modifier = Modifier.clickable {
+                                    clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(transaction.originalSms))
+                                    copied = true
+                                }
+                            )
+                        }
+                        Text(
+                            text = transaction.originalSms,
+                            fontSize = 12.sp,
+                            color = TextSecondary,
+                            lineHeight = 16.sp
+                        )
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(4.dp))
 
             // Action Buttons: Delete & Save

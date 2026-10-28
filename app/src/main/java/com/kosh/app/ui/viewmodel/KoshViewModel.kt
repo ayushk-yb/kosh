@@ -52,6 +52,10 @@ class KoshViewModel(
             if (cleaned > 0) {
                 emitMessage("Cleaned up $cleaned duplicate transactions!")
             }
+            val cleanedInstruments = repository.cleanupCorruptedInstruments()
+            if (cleanedInstruments > 0) {
+                emitMessage("Cleaned up $cleanedInstruments phantom instruments.")
+            }
         }
     }
 
@@ -691,6 +695,30 @@ class KoshViewModel(
             repository.addExplicitIou(personName, amount, note, isRefund)
             showAddIouSheet.value = false
             emitMessage("IOU added: ${formatMoney(amount)} expected from $personName.")
+        }
+    }
+
+    fun importParsedSms(parsed: com.kosh.app.data.scanner.ParsedSmsResult) {
+        if (!parsed.isValid || parsed.amount == null) return
+        viewModelScope.launch {
+            val now = System.currentTimeMillis()
+            val hash = SmsAutoScanner.generateHash(now, parsed.amount, parsed.title, parsed.instrument)
+            val tx = TransactionEntity(
+                title = parsed.title,
+                grossAmount = parsed.amount,
+                trueNetAmount = if (parsed.isWealth || parsed.isCredit) 0.0 else parsed.amount,
+                reimbursableAmount = 0.0,
+                category = if (parsed.isCredit) "INFLOW" else parsed.category.name,
+                instrumentName = parsed.instrument,
+                timestamp = now,
+                isAssetWealth = parsed.isWealth,
+                note = if (parsed.isCredit) "Imported from SMS Parser Lab (Credit)" else "Imported from SMS Parser Lab",
+                hasSplit = false,
+                smsRefHash = hash,
+                originalSms = parsed.rawBody
+            )
+            repository.insertTransaction(tx)
+            emitMessage("Imported: ${parsed.title} (${formatMoney(parsed.amount)})")
         }
     }
 

@@ -17,11 +17,11 @@
 
   <br/>
 
-  <a href="https://github.com/ayushk-yb/kosh/releases/latest/download/Kosh-v1.0.0.apk">
-    <img src="https://img.shields.io/badge/⚡_Download_Latest_APK-v1.0.0-10B981?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
+  <a href="https://github.com/ayushk-yb/kosh/releases/latest/download/Kosh-v1.1.0.apk">
+    <img src="https://img.shields.io/badge/⚡_Download_Latest_APK-v1.1.0-10B981?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
   </a>
   <br/>
-  <sub>Direct download • 18.5 MB • Android 8.0 (API 26) and above</sub>
+  <sub>Direct download • 18.2 MB • Android 8.0 (API 26) and above</sub>
 </div>
 
 ---
@@ -101,7 +101,7 @@ Kosh simultaneously calculates two financial realities:
 
 ### Option 1: Direct APK Download (Recommended)
 1. Download the latest release from GitHub:  
-   👉 **[Download Kosh v1.0.0 APK](https://github.com/ayushk-yb/kosh/releases/latest/download/Kosh-v1.0.0.apk)** *(or get it from the [`release/`](release/) folder in this repository)*.
+   👉 **[Download Kosh v1.1.0 APK](https://github.com/ayushk-yb/kosh/releases/latest/download/Kosh-v1.1.0.apk)** *(or get it from the [`release/`](release/) folder in this repository)*.
 2. Tap the downloaded `.apk` file on your Android device.
 3. If prompted, allow **"Install from unknown sources"** for your browser or file manager.
 4. Open **Kosh** and grant SMS permissions so it can scan your transactions locally.

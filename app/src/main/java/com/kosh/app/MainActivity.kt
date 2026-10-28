@@ -43,6 +43,7 @@ import com.kosh.app.ui.components.MatchSplitBottomSheet
 import com.kosh.app.ui.components.PayHouseholdBottomSheet
 import com.kosh.app.ui.components.PersonPickerModal
 import com.kosh.app.ui.components.SimulateInflowToast
+import com.kosh.app.ui.components.SmsParserLabBottomSheet
 import com.kosh.app.ui.components.UndoHouseholdPaymentDialog
 import com.kosh.app.ui.screens.AllTransactionsScreen
 import com.kosh.app.ui.screens.CardsScreen
@@ -183,6 +184,7 @@ fun KoshApp(
     var showMatchSplitSheet by remember { mutableStateOf(false) }
     var showAddHouseholdSheet by remember { mutableStateOf(false) }
     var showAddCardSheet by remember { mutableStateOf(false) }
+    var showParserLabSheet by remember { mutableStateOf(false) }
     var showPersonPickerForCircle by remember { mutableStateOf(false) }
     var showPersonPickerForSplits by remember { mutableStateOf(false) }
     var showAllTransactions by remember { mutableStateOf(false) }
@@ -261,7 +263,8 @@ fun KoshApp(
                         onEditHousehold = { ob -> editingObligation = ob },
                         onAddHousehold = { showAddHouseholdSheet = true },
                         onViewAllTransactions = { showAllTransactions = true },
-                        onTransactionClick = { tx -> editingTransaction = tx }
+                        onTransactionClick = { tx -> editingTransaction = tx },
+                        onOpenParserLab = { showParserLabSheet = true }
                     )
                     AppTab.SPLITS -> PendingInScreen(
                         currency = currency,
@@ -407,6 +410,17 @@ fun KoshApp(
                         onDismiss = { showAddCardSheet = false },
                         onSave = { bank, card, last4, isCredit, limit, cycle, due ->
                             viewModel.addPaymentInstrument(bank, card, last4, isCredit, limit, cycle, due)
+                        }
+                    )
+                }
+
+                // SMS Parser Lab Bottom Sheet
+                if (showParserLabSheet) {
+                    SmsParserLabBottomSheet(
+                        currency = currency,
+                        onDismiss = { showParserLabSheet = false },
+                        onImportTransaction = { parsed ->
+                            viewModel.importParsedSms(parsed)
                         }
                     )
                 }

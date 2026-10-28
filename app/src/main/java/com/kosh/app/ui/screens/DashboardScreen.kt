@@ -77,6 +77,7 @@ fun DashboardScreen(
     onAddHousehold: () -> Unit = {},
     onViewAllTransactions: () -> Unit,
     onTransactionClick: (TransactionEntity) -> Unit = {},
+    onOpenParserLab: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val totalCashOutflow = netSpend + totalReceivables
@@ -155,37 +156,63 @@ fun DashboardScreen(
                     }
                 }
 
-                // Action Button: Scan SMS
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFF162032))
-                        .border(1.dp, CardBorder, RoundedCornerShape(12.dp))
-                        .clickable(enabled = !isScanningSms) { onScanSms() }
-                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (isScanningSms) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(13.dp),
-                                color = ElectricMint,
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = "Scan SMS",
-                                tint = ElectricMint,
-                                modifier = Modifier.size(13.dp)
+                    // Action Button: Parser Lab
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFF162032))
+                            .border(1.dp, CardBorder, RoundedCornerShape(12.dp))
+                            .clickable { onOpenParserLab() }
+                            .padding(horizontal = 9.dp, vertical = 6.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("🧪", fontSize = 12.sp)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Parser Lab",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextPrimary
                             )
                         }
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "Scan SMS",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
-                        )
+                    }
+
+                    // Action Button: Scan SMS
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFF162032))
+                            .border(1.dp, CardBorder, RoundedCornerShape(12.dp))
+                            .clickable(enabled = !isScanningSms) { onScanSms() }
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (isScanningSms) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(13.dp),
+                                    color = ElectricMint,
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = "Scan SMS",
+                                    tint = ElectricMint,
+                                    modifier = Modifier.size(13.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Scan SMS",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextPrimary
+                            )
+                        }
                     }
                 }
             }

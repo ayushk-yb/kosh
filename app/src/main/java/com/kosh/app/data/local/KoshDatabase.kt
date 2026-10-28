@@ -26,7 +26,7 @@ import kotlinx.coroutines.CoroutineScope
         DeletedTransactionHashEntity::class,
         CustomCategoryEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class KoshDatabase : RoomDatabase() {
@@ -67,6 +67,12 @@ abstract class KoshDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_4_5 = object : androidx.room.migration.Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE transactions ADD COLUMN originalSms TEXT DEFAULT NULL")
+            }
+        }
+
         fun getDatabase(context: Context, scope: CoroutineScope): KoshDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -74,7 +80,7 @@ abstract class KoshDatabase : RoomDatabase() {
                     KoshDatabase::class.java,
                     "kosh_treasury_database"
                 )
-                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
+                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                     .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance

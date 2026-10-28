@@ -17,7 +17,8 @@ data class TransactionEntity(
     val isAssetWealth: Boolean = false, // SIP / Mutual funds
     val note: String = "",
     val hasSplit: Boolean = false,
-    val smsRefHash: String? = null
+    val smsRefHash: String? = null,
+    val originalSms: String? = null
 )
 
 fun TransactionEntity.isCreditOrInflow(): Boolean {
