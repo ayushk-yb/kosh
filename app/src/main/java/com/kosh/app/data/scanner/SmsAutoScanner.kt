@@ -4,6 +4,7 @@ import android.content.Context
 import android.database.Cursor
 import android.provider.Telephony
 import com.kosh.app.data.local.KoshDatabase
+import com.kosh.app.data.model.IgnoreRuleEntity
 import com.kosh.app.data.model.TransactionCategory
 import com.kosh.app.data.model.TransactionEntity
 import kotlinx.coroutines.Dispatchers
@@ -27,6 +28,9 @@ data class ParsedSmsResult(
     val isDebit: Boolean,
     val isCredit: Boolean,
     val isMandate: Boolean,
+    val isUpi: Boolean = false,
+    val isCreditCardBillPayment: Boolean = false,
+    val isRefund: Boolean = false,
     val amount: Double?,
     val matchedAmountPattern: String?,
     val category: TransactionCategory,
@@ -42,12 +46,12 @@ object SmsAutoScanner {
     val amountPatterns = listOf(
         // "Amt Deducted! Rs.65000", "deducted Rs. 500", "debited by Rs. 500", "spent Rs. 500", "transferred Rs. 500"
         Pattern.compile("(?:amt\\s+deducted!?|deducted\\s*(?:by)?|debited\\s*(?:by)?|spent|sent|transferred|withdrawn|paid)\\s*(?:rs\\.?|inr|₹)?\\s*([0-9,]+(?:\\.[0-9]{1,2})?)", Pattern.CASE_INSENSITIVE),
-        // "Amt Credited! Rs.65000", "credited by Rs. 500", "received Rs. 500", "refund of Rs. 500"
-        Pattern.compile("(?:amt\\s+credited!?|credited\\s*(?:by|with)?|received|refund\\s+of)\\s*(?:rs\\.?|inr|₹)?\\s*([0-9,]+(?:\\.[0-9]{1,2})?)", Pattern.CASE_INSENSITIVE),
+        // "Amt Credited! Rs.65000", "credited by Rs. 500", "received Rs. 500", "refund of Rs. 500", "credit of Rs 500", "deposited Rs 500"
+        Pattern.compile("(?:amt\\s+credited!?|credited\\s*(?:by|with|to)?|received|refund\\s+of|credit\\s+(?:of|for|to)|cashback\\s+of|deposited)\\s*(?:rs\\.?|inr|₹)?\\s*([0-9,]+(?:\\.[0-9]{1,2})?)", Pattern.CASE_INSENSITIVE),
         // "Rs. 500 debited/spent/deducted/transferred/withdrawn/paid"
         Pattern.compile("(?:rs\\.?|inr|₹)\\s*([0-9,]+(?:\\.[0-9]{1,2})?)\\s*(?:debited|spent|withdrawn|transferred|deducted|paid)", Pattern.CASE_INSENSITIVE),
-        // "Rs. 500 credited/received/refunded"
-        Pattern.compile("(?:rs\\.?|inr|₹)\\s*([0-9,]+(?:\\.[0-9]{1,2})?)\\s*(?:credited|received|refunded)", Pattern.CASE_INSENSITIVE),
+        // "Rs. 500 credited/received/refunded/deposited"
+        Pattern.compile("(?:rs\\.?|inr|₹)\\s*([0-9,]+(?:\\.[0-9]{1,2})?)\\s*(?:credited|received|refunded|deposited)", Pattern.CASE_INSENSITIVE),
         // "NEFT txn via ... Rs. 65000" or "NEFT txn of Rs. 65000" or "for NEFT txn"
         Pattern.compile("(?:neft|imps|rtgs|upi)\\s*(?:txn|transfer)?\\s*(?:of|for)?\\s*(?:rs\\.?|inr|₹)?\\s*([0-9,]+(?:\\.[0-9]{1,2})?)", Pattern.CASE_INSENSITIVE),
         // Fallback: Rs.65000 anywhere in transaction message
@@ -58,6 +62,26 @@ object SmsAutoScanner {
     private val mandateMerchantPattern1 = Pattern.compile("towards\\s+(?:upi\\s+)?mandate\\s+(?:to|for)\\s+([A-Za-z0-9&\\.\\-_\\s]{3,25})", Pattern.CASE_INSENSITIVE)
     private val mandateMerchantPattern2 = Pattern.compile("mandate\\s+execution\\s+(?:for|to)\\s+([A-Za-z0-9&\\.\\-_\\s]{3,25})", Pattern.CASE_INSENSITIVE)
     private val mandateMerchantPattern3 = Pattern.compile("for\\s+mandate\\s+towards\\s+([A-Za-z0-9&\\.\\-_\\s]{3,25})", Pattern.CASE_INSENSITIVE)
+
+    fun isCreditCardBillPayment(body: String): Boolean {
+        val lower = body.lowercase()
+        val hasCard = lower.contains("credit card") || lower.contains("card ending") || lower.contains("card xx") || lower.contains("card no") || lower.contains("cc bill") || lower.contains("card bill")
+        val hasPayment = lower.contains("bill") || lower.contains("payment") || lower.contains("paid towards") || lower.contains("received payment") || lower.contains("autopay")
+        return hasCard && hasPayment
+    }
+
+    fun isUpi(body: String): Boolean {
+        return body.contains("upi", ignoreCase = true)
+    }
+
+    fun isRefund(body: String): Boolean {
+        val lower = body.lowercase()
+        return lower.contains("refund") ||
+                lower.contains("reversal") ||
+                lower.contains("cashback") ||
+                lower.contains("reversed") ||
+                lower.contains("returned")
+    }
 
     fun isDebit(body: String): Boolean {
         val lower = body.lowercase()
@@ -85,11 +109,18 @@ object SmsAutoScanner {
         val lower = body.lowercase()
         return lower.contains("credited") ||
                 lower.contains("amt credited") ||
+                lower.contains("credit of") ||
+                lower.contains("credit to") ||
+                lower.contains("credit in") ||
                 lower.contains("received") ||
                 lower.contains("refund") ||
+                lower.contains("cashback") ||
+                lower.contains("deposited") ||
                 lower.contains("cr to") ||
-                (lower.contains("neft") && (lower.contains("to your") || lower.contains("credit") || lower.contains("cr"))) ||
-                (lower.contains("imps") && (lower.contains("to your") || lower.contains("credit") || lower.contains("cr")))
+                (lower.contains("cr.") && (lower.contains("ac") || lower.contains("a/c"))) ||
+                (lower.contains("salary") && (lower.contains("credit") || lower.contains("cr"))) ||
+                (lower.contains("reversal") && !lower.contains("reversal failed") && !lower.contains("failed reversal")) ||
+                ((lower.contains("neft") || lower.contains("imps") || lower.contains("rtgs")) && (lower.contains("to your") || lower.contains("credit") || lower.contains("cr")))
     }
 
     fun extractAmount(body: String): Pair<Double?, String?> {
@@ -114,7 +145,38 @@ object SmsAutoScanner {
         return Pair(null, null)
     }
 
-    fun getIgnoreReason(body: String): String? {
+    fun matchesCustomIgnoreRule(body: String, rules: List<IgnoreRuleEntity>): IgnoreRuleEntity? {
+        for (rule in rules) {
+            val query = rule.pattern.trim()
+            if (query.isEmpty()) continue
+            if (rule.isWholeWord) {
+                val regex = if (rule.isCaseSensitive) {
+                    Regex("\\b${Regex.escape(query)}\\b")
+                } else {
+                    Regex("\\b${Regex.escape(query)}\\b", RegexOption.IGNORE_CASE)
+                }
+                if (regex.containsMatchIn(body)) return rule
+            } else {
+                val matched = if (rule.isCaseSensitive) {
+                    body.contains(query)
+                } else {
+                    body.contains(query, ignoreCase = true)
+                }
+                if (matched) return rule
+            }
+        }
+        return null
+    }
+
+    fun getIgnoreReason(body: String, customRules: List<IgnoreRuleEntity> = emptyList()): String? {
+        // 0. Check custom user-defined exception rules
+        val matchedCustomRule = matchesCustomIgnoreRule(body, customRules)
+        if (matchedCustomRule != null) {
+            val wordType = if (matchedCustomRule.isWholeWord) "whole word" else "contains"
+            val caseType = if (matchedCustomRule.isCaseSensitive) "case-sensitive" else "case-insensitive"
+            return "Custom exception rule: '${matchedCustomRule.pattern}' ($wordType, $caseType)"
+        }
+
         val lower = body.lowercase()
 
         // 1. Reject OTP & Security Codes
@@ -179,7 +241,6 @@ object SmsAutoScanner {
         }
 
         // 4. Reject Mandate Requests, Pre-auth & Failed Transactions
-        // If this message is an actual executed debit, do NOT reject for mandate/autopay keywords!
         val actualDebit = isDebit(body)
 
         val nonTxKeywords = listOf(
@@ -214,6 +275,10 @@ object SmsAutoScanner {
                     // Executed debit with mandate execution info, do not reject!
                     continue
                 }
+                if (kw == "reversed" && (lower.contains("credited") || lower.contains("credit") || lower.contains("refund") || lower.contains("cr"))) {
+                    // Reversal credited back to account, do not reject!
+                    continue
+                }
                 return "Failed / Request / Non-transaction ('$kw')"
             }
         }
@@ -221,38 +286,67 @@ object SmsAutoScanner {
         return null
     }
 
-    fun isIgnoredMessage(body: String): Boolean {
-        return getIgnoreReason(body) != null
+    fun isIgnoredMessage(body: String, customRules: List<IgnoreRuleEntity> = emptyList()): Boolean {
+        return getIgnoreReason(body, customRules) != null
     }
 
     fun extractLast4(body: String): String? {
-        val cardPattern = Pattern.compile("(?:card|a/c|acct|account)\\s*(?:ending\\s*(?:with|in)?\\s*)?(?:[x\\*]{2,}|no\\.?\\s*)?(\\d{4})", Pattern.CASE_INSENSITIVE)
-        val cm = cardPattern.matcher(body)
-        if (cm.find()) {
-            val last4 = cm.group(1)
-            if (!last4.isNullOrBlank()) return last4
+        val patterns = listOf(
+            // e.g. "Card ending 4450", "Card ending with XX4450", "Card no. XX4450", "A/c ending 1234", "account ending in **1234"
+            Pattern.compile("(?i)(?:card|credit\\s*card|debit\\s*card|a/c|acct|account)\\s*(?:a/c|account)?\\s*(?:no\\.?|number)?\\s*(?:ending\\s*(?:with|in)?\\s*)?(?:[:\\-]?\\s*)?(?:[x\\*\\.]{1,}|no\\.?\\s*)?\\s*(\\d{4})"),
+            // e.g. "ending with 4450", "ending in XX4450", "ending 4450"
+            Pattern.compile("(?i)(?:ending\\s*(?:with|in)?\\s*)[:\\-]?\\s*(?:[x\\*\\.]{1,})?\\s*(\\d{4})"),
+            // e.g. "card ...4450", "card **4450", "card: 4450", "card 4450"
+            Pattern.compile("(?i)(?:card|credit\\s*card)\\s*[:\\-]?\\s*(?:[x\\*\\.]{1,})?\\s*(\\d{4})"),
+            // e.g. "XX4450" or "**4450" or "...4450"
+            Pattern.compile("(?i)(?:[x\\*]{2,}|\\.{3,})\\s*(\\d{4})")
+        )
+        for (p in patterns) {
+            val cm = p.matcher(body)
+            if (cm.find()) {
+                val last4 = cm.group(1)
+                if (!last4.isNullOrBlank() && last4.length == 4) return last4
+            }
         }
         return null
     }
 
-    fun identifyInstrument(address: String, lower: String, last4: String? = null): String {
+    fun isCreditCard(body: String): Boolean {
+        val lower = body.lowercase()
+        if (lower.contains("credit card") || lower.contains("creditcard")) return true
+        if (lower.contains("sbi card") || lower.contains("onecard") || lower.contains("amex") || lower.contains("american express")) return true
+        if (lower.contains("credit limit") || lower.contains("card limit") || lower.contains("avl lmt") || lower.contains("available limit")) return true
+        if (lower.contains("cardholder") || lower.contains("card member")) return true
+        if (lower.contains("spent on card") || lower.contains("spent on your card") || lower.contains("used on card") || lower.contains("charged to card")) return true
+        if (lower.contains("card ending") || lower.contains("card no") || lower.contains("card xx") || lower.contains("card **")) {
+            if (!lower.contains("debit card")) return true
+        }
+        return false
+    }
+
+    fun identifyInstrument(address: String, lower: String, last4: String? = null, isCard: Boolean = false): String {
         val upperAddr = address.uppercase()
         val base = when {
-            upperAddr.contains("HDFC") || lower.contains("hdfc") -> "HDFC Bank"
-            upperAddr.contains("SBI") || lower.contains("sbi") -> "SBI Card"
-            upperAddr.contains("ICICI") || lower.contains("icici") -> "ICICI Bank"
-            upperAddr.contains("AXIS") || lower.contains("axis") -> "Axis Bank"
-            upperAddr.contains("KOTAK") || lower.contains("kotak") -> "Kotak Bank"
+            upperAddr.contains("ONECARD") || lower.contains("onecard") -> "OneCard"
+            upperAddr.contains("AMEX") || lower.contains("amex") || lower.contains("american express") -> "American Express"
+            upperAddr.contains("HDFC") || lower.contains("hdfc") -> if (isCard) "HDFC Card" else "HDFC Bank"
+            upperAddr.contains("SBI") || lower.contains("sbi") -> if (isCard) "SBI Card" else "SBI Bank"
+            upperAddr.contains("ICICI") || lower.contains("icici") -> if (isCard) "ICICI Card" else "ICICI Bank"
+            upperAddr.contains("AXIS") || lower.contains("axis") -> if (isCard) "Axis Card" else "Axis Bank"
+            upperAddr.contains("KOTAK") || lower.contains("kotak") -> if (isCard) "Kotak Card" else "Kotak Bank"
             upperAddr.contains("PNB") || lower.contains("pnb") -> "PNB Bank"
             upperAddr.contains("CANARA") || lower.contains("canara") -> "Canara Bank"
             upperAddr.contains("BOB") || lower.contains("baroda") -> "Bank of Baroda"
-            upperAddr.contains("IDFC") || lower.contains("idfc") -> "IDFC FIRST"
-            upperAddr.contains("INDUS") || lower.contains("indusind") -> "IndusInd Bank"
+            upperAddr.contains("IDFC") || lower.contains("idfc") -> if (isCard) "IDFC FIRST Card" else "IDFC FIRST"
+            upperAddr.contains("INDUS") || lower.contains("indusind") -> if (isCard) "IndusInd Card" else "IndusInd Bank"
             upperAddr.contains("YES") || lower.contains("yes bank") -> "Yes Bank"
             upperAddr.contains("FED") || lower.contains("federal") -> "Federal Bank"
-            upperAddr.contains("RBL") || lower.contains("rbl") -> "RBL Bank"
+            upperAddr.contains("RBL") || lower.contains("rbl") -> if (isCard) "RBL Card" else "RBL Bank"
+            upperAddr.contains("AU") || lower.contains("aubank") || lower.contains("au small") -> if (isCard) "AU Bank Card" else "AU Bank"
+            upperAddr.contains("HSBC") || lower.contains("hsbc") -> if (isCard) "HSBC Card" else "HSBC Bank"
+            upperAddr.contains("SCB") || lower.contains("standard chartered") -> if (isCard) "Standard Chartered Card" else "Standard Chartered Bank"
             lower.contains("upi") -> "UPI Account"
-            else -> "Bank Account"
+            else -> if (isCard) "Credit Card" else "Bank Account"
         }
         return if (!last4.isNullOrBlank()) "$base ($last4)" else base
     }
@@ -390,18 +484,28 @@ object SmsAutoScanner {
         return "${category.displayName} Spend"
     }
 
-    fun parseSms(body: String, address: String = ""): ParsedSmsResult {
+    fun parseSms(body: String, address: String = "", customRules: List<IgnoreRuleEntity> = emptyList()): ParsedSmsResult {
         val lower = body.lowercase()
-        val ignoreReason = getIgnoreReason(body)
+        val ignoreReason = getIgnoreReason(body, customRules)
         val isIgnored = ignoreReason != null
         val debit = isDebit(body)
         val credit = isCredit(body)
+        val isUpiTx = isUpi(body)
+        val isCcBill = isCreditCardBillPayment(body)
+        val isRefundTx = isRefund(body)
         val mandate = lower.contains("mandate") || lower.contains("autopay")
         val (amt, amtDesc) = extractAmount(body)
         val last4 = extractLast4(body)
-        val instrument = identifyInstrument(address, lower, last4)
+        val isCard = isCreditCard(body)
+        val instrument = identifyInstrument(address, lower, last4, isCard)
         val (category, isWealth) = categorize(lower)
-        val title = extractTitle(body, lower, address, category, instrument)
+        val title = if (isCcBill) {
+            "${instrument.substringBefore(" (")} Credit Card Bill Payment"
+        } else if (isRefundTx && amt != null) {
+            "Refund / Reversal ($instrument)"
+        } else {
+            extractTitle(body, lower, address, category, instrument)
+        }
 
         // Find candidate trigger keywords in the text
         val candidateList = listOf(
@@ -412,6 +516,9 @@ object SmsAutoScanner {
         )
         val matchedKws = candidateList.filter { lower.contains(it) }.toMutableList()
         if (last4 != null) matchedKws.add("Ending $last4")
+        if (isUpiTx && !matchedKws.contains("upi")) matchedKws.add("UPI")
+        if (isCcBill) matchedKws.add("Credit Card Bill")
+        if (isRefundTx) matchedKws.add("Refund")
 
         val isValid = !isIgnored && (amt != null && amt > 0) && (debit || credit)
 
@@ -424,6 +531,9 @@ object SmsAutoScanner {
             isDebit = debit,
             isCredit = credit,
             isMandate = mandate,
+            isUpi = isUpiTx,
+            isCreditCardBillPayment = isCcBill,
+            isRefund = isRefundTx,
             amount = amt,
             matchedAmountPattern = amtDesc,
             category = category,
@@ -510,6 +620,7 @@ object SmsAutoScanner {
             existingSignatures.add(generateDaySignature(it.timestamp, it.grossAmount, it.title))
         }
         val deletedHashes = database.deletedTransactionHashDao().getAllDeletedHashes().toHashSet()
+        val customRules = database.ignoreRuleDao().getAllRulesList()
 
         cursor?.use { c ->
             val addressCol = c.getColumnIndex(Telephony.Sms.ADDRESS)
@@ -525,7 +636,7 @@ object SmsAutoScanner {
                     maxTimestampFound = date
                 }
 
-                val parsed = parseSms(body, address)
+                val parsed = parseSms(body, address, customRules)
                 if (!parsed.isValid || parsed.amount == null || parsed.amount <= 0) continue
 
                 val hash = generateHash(date, parsed.amount, parsed.title, parsed.instrument)
@@ -561,9 +672,7 @@ object SmsAutoScanner {
                     if (!last4.isNullOrBlank()) {
                         val existing = database.paymentInstrumentDao().getByLast4(last4)
                         if (existing == null) {
-                            val lower = body.lowercase()
-                            val isCreditCard = (lower.contains("credit card") || lower.contains("card ending") || lower.contains("card xx") || lower.contains("card no")) &&
-                                               !lower.contains("credited") && !lower.contains("a/c") && !lower.contains("account")
+                            val isCreditCard = isCreditCard(body)
 
                             database.paymentInstrumentDao().insertInstrument(
                                 com.kosh.app.data.model.PaymentInstrumentEntity(
@@ -583,16 +692,31 @@ object SmsAutoScanner {
                 }
 
                 // Insert into Database with Hash and original SMS
+                val isCcBill = parsed.isCreditCardBillPayment
+                val isRefund = parsed.isRefund
                 val tx = TransactionEntity(
                     title = parsed.title,
                     grossAmount = parsed.amount,
-                    trueNetAmount = if (parsed.isWealth || parsed.isCredit) 0.0 else parsed.amount,
+                    trueNetAmount = when {
+                        parsed.isWealth || isCcBill || parsed.isCredit -> 0.0
+                        else -> parsed.amount
+                    },
                     reimbursableAmount = 0.0,
-                    category = if (parsed.isCredit) "INFLOW" else parsed.category.name,
+                    category = when {
+                        isCcBill -> "BILL_PAYMENT"
+                        isRefund -> "REFUND"
+                        parsed.isCredit -> "INFLOW"
+                        else -> parsed.category.name
+                    },
                     instrumentName = parsed.instrument,
                     timestamp = date,
                     isAssetWealth = parsed.isWealth,
-                    note = if (parsed.isCredit) "Credit / Inflow parsed from SMS" else "Auto-parsed from SMS",
+                    note = when {
+                        isCcBill -> "Credit Card Bill Payment [CC_PAYMENT] - Excluded from expenses"
+                        isRefund -> "Refund / Reversal parsed from SMS [OFFSET_EXPENSE]"
+                        parsed.isCredit -> "Credit / Inflow parsed from SMS"
+                        else -> "Auto-parsed from SMS"
+                    },
                     hasSplit = false,
                     smsRefHash = hash,
                     originalSms = body

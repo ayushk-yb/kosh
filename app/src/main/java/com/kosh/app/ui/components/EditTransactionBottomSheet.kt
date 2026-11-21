@@ -65,11 +65,20 @@ import com.kosh.app.data.model.HouseholdObligationEntity
 import com.kosh.app.data.model.PersonEntity
 import com.kosh.app.data.model.TransactionCategory
 import com.kosh.app.data.model.TransactionEntity
+import com.kosh.app.data.model.isCreditCardBillPayment
+import com.kosh.app.data.model.isCreditOrInflow
+import com.kosh.app.data.model.isRefundOrCreditOffset
 import com.kosh.app.data.repository.ParticipantSplitShare
+import com.kosh.app.ui.components.CategoryIconTile
+import com.kosh.app.ui.components.getCategoryVisual
 import com.kosh.app.ui.theme.AmberGold
 import com.kosh.app.ui.theme.CardBackground
+import com.kosh.app.ui.theme.CardBackgroundElevated
 import com.kosh.app.ui.theme.CardBorder
+import com.kosh.app.ui.theme.CardBorderSubtle
 import com.kosh.app.ui.theme.ElectricMint
+import com.kosh.app.ui.theme.ElectricMintContainer
+import com.kosh.app.ui.theme.KoshShapes
 import com.kosh.app.ui.theme.ObsidianSurface
 import com.kosh.app.ui.theme.PartnerPink
 import com.kosh.app.ui.theme.RoyalBlue
@@ -144,6 +153,8 @@ fun EditTransactionBottomSheet(
     var showPersonPicker by remember { mutableStateOf(false) }
     var showAddCategorySheet by remember { mutableStateOf(false) }
     var isAssetWealth by remember { mutableStateOf(transaction.isAssetWealth) }
+    var isCcBillPayment by remember { mutableStateOf(transaction.isCreditCardBillPayment()) }
+    var isExpenseOffset by remember { mutableStateOf(transaction.isRefundOrCreditOffset()) }
     var note by remember {
         mutableStateOf(
             when {
@@ -256,13 +267,21 @@ fun EditTransactionBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = SubSurface,
-        dragHandle = null
+        containerColor = ObsidianSurface,
+        shape = KoshShapes.Sheet,
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(vertical = 12.dp)
+                    .size(width = 36.dp, height = 4.dp)
+                    .background(TextMuted.copy(alpha = 0.4f), shape = KoshShapes.Pill)
+            )
+        }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp)
+                .padding(horizontal = 20.dp, vertical = 8.dp)
                 .verticalScroll(rememberScrollState())
                 .navigationBarsPadding()
                 .imePadding(),
@@ -308,13 +327,14 @@ fun EditTransactionBottomSheet(
                 label = { Text("Merchant / Title", color = TextSecondary) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
+                shape = KoshShapes.Input,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = ElectricMint,
-                    unfocusedBorderColor = CardBorder,
+                    unfocusedBorderColor = CardBorderSubtle,
                     focusedTextColor = TextPrimary,
                     unfocusedTextColor = TextPrimary,
-                    focusedContainerColor = ObsidianSurface,
-                    unfocusedContainerColor = ObsidianSurface
+                    focusedContainerColor = CardBackgroundElevated,
+                    unfocusedContainerColor = CardBackgroundElevated
                 )
             )
 
@@ -330,23 +350,25 @@ fun EditTransactionBottomSheet(
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth(),
+                shape = KoshShapes.Input,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = ElectricMint,
-                    unfocusedBorderColor = CardBorder,
+                    unfocusedBorderColor = CardBorderSubtle,
                     focusedTextColor = TextPrimary,
                     unfocusedTextColor = TextPrimary,
-                    focusedContainerColor = ObsidianSurface,
-                    unfocusedContainerColor = ObsidianSurface
+                    focusedContainerColor = CardBackgroundElevated,
+                    unfocusedContainerColor = CardBackgroundElevated
                 )
             )
 
             // Category Chips
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text = "Category",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextSecondary
+                    text = "CATEGORY",
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextMuted,
+                    letterSpacing = 1.sp
                 )
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -354,14 +376,15 @@ fun EditTransactionBottomSheet(
                 ) {
                     TransactionCategory.values().forEach { cat ->
                         val isSelected = selectedCategory == cat && selectedCustomCategory == null
+                        val visual = getCategoryVisual(cat.name)
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(if (isSelected) ElectricMint else ObsidianSurface)
+                                .clip(KoshShapes.Chip)
+                                .background(if (isSelected) ElectricMintContainer else CardBackgroundElevated)
                                 .border(
-                                    1.dp,
-                                    if (isSelected) ElectricMint else CardBorder,
-                                    RoundedCornerShape(8.dp)
+                                    width = 0.5.dp,
+                                    color = if (isSelected) ElectricMint.copy(alpha = 0.5f) else CardBorderSubtle,
+                                    shape = KoshShapes.Chip
                                 )
                                 .clickable {
                                     selectedCategory = cat
@@ -370,14 +393,23 @@ fun EditTransactionBottomSheet(
                                         isAssetWealth = true
                                     }
                                 }
-                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                                .padding(horizontal = 11.dp, vertical = 7.dp)
                         ) {
-                            Text(
-                                text = "${cat.icon} ${cat.displayName}",
-                                fontSize = 11.sp,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isSelected) Color(0xFF0F141C) else TextSecondary
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = visual.icon,
+                                    contentDescription = null,
+                                    tint = if (isSelected) ElectricMint else visual.tint,
+                                    modifier = Modifier.size(13.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = cat.displayName,
+                                    fontSize = 11.sp,
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                                    color = if (isSelected) TextPrimary else TextSecondary
+                                )
+                            }
                         }
                     }
 
@@ -387,12 +419,12 @@ fun EditTransactionBottomSheet(
                         val accentColor = Color(customCat.colorHex)
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(if (isSelected) accentColor else ObsidianSurface)
+                                .clip(KoshShapes.Chip)
+                                .background(if (isSelected) accentColor.copy(alpha = 0.2f) else CardBackgroundElevated)
                                 .border(
-                                    1.dp,
-                                    if (isSelected) accentColor else CardBorder,
-                                    RoundedCornerShape(8.dp)
+                                    width = 0.5.dp,
+                                    color = if (isSelected) accentColor else CardBorderSubtle,
+                                    shape = KoshShapes.Chip
                                 )
                                 .clickable {
                                     selectedCustomCategory = customCat
@@ -401,13 +433,13 @@ fun EditTransactionBottomSheet(
                                         isAssetWealth = true
                                     }
                                 }
-                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                                .padding(horizontal = 11.dp, vertical = 7.dp)
                         ) {
                             Text(
                                 text = "${customCat.iconEmoji} ${customCat.name}",
                                 fontSize = 11.sp,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isSelected) Color(0xFF0F141C) else TextSecondary
+                                color = if (isSelected) accentColor else TextSecondary
                             )
                         }
                     }
@@ -415,11 +447,11 @@ fun EditTransactionBottomSheet(
                     // + New Category Chip
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color(0xFF1E2838))
-                            .border(1.dp, RoyalBlue.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
+                            .clip(KoshShapes.Chip)
+                            .background(CardBackgroundElevated)
+                            .border(0.5.dp, RoyalBlue.copy(alpha = 0.4f), KoshShapes.Chip)
                             .clickable { showAddCategorySheet = true }
-                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                            .padding(horizontal = 11.dp, vertical = 7.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
@@ -428,11 +460,11 @@ fun EditTransactionBottomSheet(
                                 tint = RoyalBlue,
                                 modifier = Modifier.size(13.dp)
                             )
-                            Spacer(modifier = Modifier.width(3.dp))
+                            Spacer(modifier = Modifier.width(5.dp))
                             Text(
                                 text = "New Category",
                                 fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.SemiBold,
                                 color = RoyalBlue
                             )
                         }
@@ -657,6 +689,90 @@ fun EditTransactionBottomSheet(
                             uncheckedTrackColor = Color(0xFF1E293B)
                         )
                     )
+                }
+            }
+
+            // Credit Card Bill Payment Toggle
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(ObsidianSurface)
+                    .border(1.dp, CardBorder, RoundedCornerShape(14.dp))
+                    .padding(14.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "💳 Credit Card Bill Payment",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = "Exclude from expenses to prevent double-counting with card spends",
+                            fontSize = 10.sp,
+                            color = TextSecondary
+                        )
+                    }
+
+                    Switch(
+                        checked = isCcBillPayment,
+                        onCheckedChange = { isCcBillPayment = it },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = AmberGold,
+                            checkedTrackColor = AmberGold.copy(alpha = 0.3f),
+                            uncheckedThumbColor = TextMuted,
+                            uncheckedTrackColor = Color(0xFF1E293B)
+                        )
+                    )
+                }
+            }
+
+            // Refund / Expense Offset Toggle
+            if (transaction.isCreditOrInflow() || isExpenseOffset) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(ObsidianSurface)
+                        .border(1.dp, CardBorder, RoundedCornerShape(14.dp))
+                        .padding(14.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "🔄 Refund / Expense Offset",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextPrimary
+                            )
+                            Text(
+                                text = "Deduct from True Net Expense (for refunds, cashbacks, settlements)",
+                                fontSize = 10.sp,
+                                color = TextSecondary
+                            )
+                        }
+
+                        Switch(
+                            checked = isExpenseOffset,
+                            onCheckedChange = { isExpenseOffset = it },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = ElectricMint,
+                                checkedTrackColor = ElectricMint.copy(alpha = 0.3f),
+                                uncheckedThumbColor = TextMuted,
+                                uncheckedTrackColor = Color(0xFF1E293B)
+                            )
+                        )
+                    }
                 }
             }
 
@@ -1120,13 +1236,14 @@ fun EditTransactionBottomSheet(
                 singleLine = false,
                 maxLines = 3,
                 modifier = Modifier.fillMaxWidth(),
+                shape = KoshShapes.Input,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = ElectricMint,
-                    unfocusedBorderColor = CardBorder,
+                    unfocusedBorderColor = CardBorderSubtle,
                     focusedTextColor = TextPrimary,
                     unfocusedTextColor = TextPrimary,
-                    focusedContainerColor = ObsidianSurface,
-                    unfocusedContainerColor = ObsidianSurface
+                    focusedContainerColor = CardBackgroundElevated,
+                    unfocusedContainerColor = CardBackgroundElevated
                 )
             )
 
@@ -1190,8 +1307,8 @@ fun EditTransactionBottomSheet(
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = Color(0xFFEF4444)
                     ),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFEF4444).copy(alpha = 0.6f)),
-                    shape = RoundedCornerShape(14.dp)
+                    border = androidx.compose.foundation.BorderStroke(0.5.dp, Color(0xFFEF4444).copy(alpha = 0.6f)),
+                    shape = KoshShapes.Pill
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
@@ -1250,8 +1367,21 @@ fun EditTransactionBottomSheet(
                             onLinkToBill(linkedOb.id)
                         }
 
-                        val finalCategory = selectedCustomCategory?.name ?: selectedCategory?.name ?: transaction.category
-                        val finalWealth = selectedCustomCategory?.isWealthAsset ?: isAssetWealth
+                        var finalCategory = selectedCustomCategory?.name ?: selectedCategory?.name ?: transaction.category
+                        var finalWealth = selectedCustomCategory?.isWealthAsset ?: isAssetWealth
+
+                        if (isCcBillPayment) {
+                            finalCategory = "BILL_PAYMENT"
+                            finalWealth = false
+                            if (!finalNote.contains("[CC_PAYMENT]")) {
+                                finalNote = if (finalNote.isBlank()) "[CC_PAYMENT]" else "$finalNote [CC_PAYMENT]".trim()
+                            }
+                        } else if (isExpenseOffset) {
+                            finalCategory = "REFUND"
+                            if (!finalNote.contains("[OFFSET_EXPENSE]")) {
+                                finalNote = if (finalNote.isBlank()) "[OFFSET_EXPENSE]" else "$finalNote [OFFSET_EXPENSE]".trim()
+                            }
+                        }
 
                         if (onSaveWithSplits != null) {
                             onSaveWithSplits(
@@ -1289,9 +1419,9 @@ fun EditTransactionBottomSheet(
                     modifier = Modifier.weight(2f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = ElectricMint,
-                        contentColor = Color(0xFF0F141C)
+                        contentColor = Color(0xFF090D14)
                     ),
-                    shape = RoundedCornerShape(14.dp)
+                    shape = KoshShapes.Pill
                 ) {
                     Text(
                         text = "Save Changes",
@@ -1344,6 +1474,7 @@ fun EditTransactionBottomSheet(
         AlertDialog(
             onDismissRequest = { showDeleteConfirmDialog = false },
             containerColor = ObsidianSurface,
+            shape = KoshShapes.CardHero,
             title = {
                 Text(
                     text = "Delete Transaction?",
@@ -1369,7 +1500,7 @@ fun EditTransactionBottomSheet(
                         containerColor = Color(0xFFEF4444),
                         contentColor = Color.White
                     ),
-                    shape = RoundedCornerShape(10.dp)
+                    shape = KoshShapes.Pill
                 ) {
                     Text("Delete Permanently", fontWeight = FontWeight.Bold)
                 }

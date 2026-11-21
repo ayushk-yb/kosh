@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -54,11 +55,17 @@ import com.kosh.app.data.model.Currency
 import com.kosh.app.data.model.CustomCategoryEntity
 import com.kosh.app.data.model.PersonEntity
 import com.kosh.app.data.model.TransactionCategory
+import com.kosh.app.ui.components.getCategoryVisual
 import com.kosh.app.ui.theme.AmberGold
 import com.kosh.app.ui.theme.CardBackground
+import com.kosh.app.ui.theme.CardBackgroundElevated
 import com.kosh.app.ui.theme.CardBorder
+import com.kosh.app.ui.theme.CardBorderSubtle
 import com.kosh.app.ui.theme.ElectricMint
+import com.kosh.app.ui.theme.ElectricMintContainer
+import com.kosh.app.ui.theme.KoshShapes
 import com.kosh.app.ui.theme.ObsidianSurface
+import com.kosh.app.ui.theme.PartnerPink
 import com.kosh.app.ui.theme.RoyalBlue
 import com.kosh.app.ui.theme.SubSurface
 import com.kosh.app.ui.theme.TextMuted
@@ -99,8 +106,9 @@ fun AddExpenseBottomSheet(
         isSplit: Boolean,
         participantSplits: List<ParticipantSplitShare>,
         unassignedSplitAmount: Double,
-        isWealthAsset: Boolean
-    ) -> Unit = { _, _, _, _, _, _, _, _ -> },
+        isWealthAsset: Boolean,
+        note: String
+    ) -> Unit = { _, _, _, _, _, _, _, _, _ -> },
     onAddNewPerson: (name: String, tag: String, phone: String?, isPinned: Boolean) -> Unit = { _, _, _, _ -> },
     onTogglePin: (personId: Long, isPinned: Boolean) -> Unit = { _, _ -> },
     onPickContact: () -> Unit = {},
@@ -121,6 +129,8 @@ fun AddExpenseBottomSheet(
     var unassignedSplitText by remember { mutableStateOf("") }
     var showAddCategorySheet by remember { mutableStateOf(false) }
     var showPersonPicker by remember { mutableStateOf(false) }
+    var partnerOrFamilyType by remember { mutableStateOf("Partner") }
+    var taggedPersonName by remember { mutableStateOf("") }
     val instrumentName = "Manual Entry"
 
     val totalAmount = amountText.toDoubleOrNull() ?: 0.0
@@ -175,7 +185,15 @@ fun AddExpenseBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = ObsidianSurface,
-        dragHandle = null
+        shape = KoshShapes.Sheet,
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(vertical = 12.dp)
+                    .size(width = 36.dp, height = 4.dp)
+                    .background(TextMuted.copy(alpha = 0.4f), shape = KoshShapes.Pill)
+            )
+        }
     ) {
         Column(
             modifier = Modifier
@@ -212,12 +230,14 @@ fun AddExpenseBottomSheet(
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = ElectricMint,
-                    unfocusedBorderColor = CardBorder,
+                    unfocusedBorderColor = CardBorderSubtle,
                     focusedTextColor = TextPrimary,
-                    unfocusedTextColor = TextPrimary
+                    unfocusedTextColor = TextPrimary,
+                    focusedContainerColor = CardBackgroundElevated,
+                    unfocusedContainerColor = CardBackgroundElevated
                 ),
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp)
+                shape = KoshShapes.Input
             )
 
             // Amount input
@@ -238,12 +258,14 @@ fun AddExpenseBottomSheet(
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = ElectricMint,
-                    unfocusedBorderColor = CardBorder,
+                    unfocusedBorderColor = CardBorderSubtle,
                     focusedTextColor = TextPrimary,
-                    unfocusedTextColor = TextPrimary
+                    unfocusedTextColor = TextPrimary,
+                    focusedContainerColor = CardBackgroundElevated,
+                    unfocusedContainerColor = CardBackgroundElevated
                 ),
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp)
+                shape = KoshShapes.Input
             )
 
             // Category Chips (Built-in + Custom + Add New)
@@ -262,14 +284,15 @@ fun AddExpenseBottomSheet(
                     // Standard categories
                     items(TransactionCategory.values()) { cat ->
                         val isSelected = selectedCategory == cat && selectedCustomCategory == null
+                        val visual = getCategoryVisual(cat.name)
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(if (isSelected) ElectricMint.copy(alpha = 0.2f) else CardBackground)
+                                .clip(KoshShapes.Chip)
+                                .background(if (isSelected) ElectricMintContainer else CardBackgroundElevated)
                                 .border(
-                                    width = 1.dp,
-                                    color = if (isSelected) ElectricMint else CardBorder,
-                                    shape = RoundedCornerShape(12.dp)
+                                    width = 0.5.dp,
+                                    color = if (isSelected) ElectricMint.copy(alpha = 0.5f) else CardBorderSubtle,
+                                    shape = KoshShapes.Chip
                                 )
                                 .clickable {
                                     selectedCategory = cat
@@ -277,12 +300,21 @@ fun AddExpenseBottomSheet(
                                 }
                                 .padding(horizontal = 12.dp, vertical = 8.dp)
                         ) {
-                            Text(
-                                text = "${cat.icon} ${cat.displayName}",
-                                fontSize = 12.sp,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isSelected) ElectricMint else TextSecondary
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = visual.icon,
+                                    contentDescription = null,
+                                    tint = if (isSelected) ElectricMint else visual.tint,
+                                    modifier = Modifier.size(13.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = cat.displayName,
+                                    fontSize = 12.sp,
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                                    color = if (isSelected) TextPrimary else TextSecondary
+                                )
+                            }
                         }
                     }
 
@@ -292,12 +324,12 @@ fun AddExpenseBottomSheet(
                         val accentColor = Color(customCat.colorHex)
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(if (isSelected) accentColor.copy(alpha = 0.2f) else CardBackground)
+                                .clip(KoshShapes.Chip)
+                                .background(if (isSelected) accentColor.copy(alpha = 0.2f) else CardBackgroundElevated)
                                 .border(
-                                    width = 1.dp,
-                                    color = if (isSelected) accentColor else CardBorder,
-                                    shape = RoundedCornerShape(12.dp)
+                                    width = 0.5.dp,
+                                    color = if (isSelected) accentColor else CardBorderSubtle,
+                                    shape = KoshShapes.Chip
                                 )
                                 .clickable {
                                     selectedCustomCategory = customCat
@@ -338,6 +370,110 @@ fun AddExpenseBottomSheet(
                                     fontWeight = FontWeight.Bold,
                                     color = RoyalBlue
                                 )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Partner & Family Member Tagging Section (when Partner & Family category selected)
+            if (selectedCategory == TransactionCategory.PARTNER_FAMILY && selectedCustomCategory == null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Color(0xFF101724))
+                        .border(1.dp, PartnerPink.copy(alpha = 0.5f), RoundedCornerShape(14.dp))
+                        .padding(14.dp)
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Tag Partner / Family Expense",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = PartnerPink
+                            )
+                            Row(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color(0xFF1E293B))
+                                    .padding(2.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(if (partnerOrFamilyType == "Partner") PartnerPink else Color.Transparent)
+                                        .clickable { partnerOrFamilyType = "Partner" }
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Text(
+                                        text = "❤️ Partner",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (partnerOrFamilyType == "Partner") Color(0xFF0F141C) else TextSecondary
+                                    )
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(if (partnerOrFamilyType == "Family") ElectricMint else Color.Transparent)
+                                        .clickable { partnerOrFamilyType = "Family" }
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Text(
+                                        text = "👨‍👩‍👧 Family",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (partnerOrFamilyType == "Family") Color(0xFF0F141C) else TextSecondary
+                                    )
+                                }
+                            }
+                        }
+
+                        val memberChips = remember(allPersons, partnerOrFamilyType) {
+                            val fromPersons = allPersons.map { it.name }
+                            val presets = if (partnerOrFamilyType == "Partner") {
+                                listOf("Ananya", "Partner", "Girlfriend", "Wife")
+                            } else {
+                                listOf("Mom", "Dad", "Papa", "Maa", "Brother", "Sister")
+                            }
+                            (fromPersons + presets).distinct()
+                        }
+
+                        Text(
+                            text = "Quick Tag Member:",
+                            fontSize = 11.sp,
+                            color = TextSecondary
+                        )
+
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            memberChips.forEach { name ->
+                                val isSelected = taggedPersonName.equals(name, ignoreCase = true)
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (isSelected) (if (partnerOrFamilyType == "Partner") PartnerPink else ElectricMint) else Color(0xFF1E2838))
+                                        .border(0.5.dp, if (isSelected) Color.Transparent else CardBorder, RoundedCornerShape(8.dp))
+                                    .clickable {
+                                        taggedPersonName = if (isSelected) "" else name
+                                    }
+                                    .padding(horizontal = 8.dp, vertical = 5.dp)
+                                ) {
+                                    Text(
+                                        text = name,
+                                        fontSize = 11.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (isSelected) Color(0xFF0F141C) else TextPrimary
+                                    )
+                                }
                             }
                         }
                     }
@@ -732,9 +868,27 @@ fun AddExpenseBottomSheet(
                 onClick = {
                     if (totalAmount > 0) {
                         val chosenCustom = selectedCustomCategory
-                        val catName = chosenCustom?.name ?: selectedCategory?.name ?: "OTHER"
+                        val isPartnerFamily = selectedCategory == TransactionCategory.PARTNER_FAMILY && chosenCustom == null
+                        val catName = if (isPartnerFamily) {
+                            if (partnerOrFamilyType == "Family") "FAMILY" else "PARTNER"
+                        } else {
+                            chosenCustom?.name ?: selectedCategory?.name ?: "OTHER"
+                        }
+                        val baseNote = if (isPartnerFamily) {
+                            if (taggedPersonName.isNotBlank()) {
+                                "$partnerOrFamilyType: ${taggedPersonName.trim()}"
+                            } else {
+                                "$partnerOrFamilyType Expense"
+                            }
+                        } else ""
                         val isWealth = chosenCustom?.isWealthAsset ?: (selectedCategory == TransactionCategory.SIP_WEALTH)
-                        val title = titleText.ifBlank { chosenCustom?.name ?: selectedCategory?.displayName ?: "Expense" }
+                        val title = titleText.ifBlank {
+                            if (isPartnerFamily) {
+                                if (taggedPersonName.isNotBlank()) "$partnerOrFamilyType Spend (${taggedPersonName.trim()})" else "$partnerOrFamilyType Spend"
+                            } else {
+                                chosenCustom?.name ?: selectedCategory?.displayName ?: "Expense"
+                            }
+                        }
 
                         onSaveExpenseWithSplits(
                             title,
@@ -744,19 +898,20 @@ fun AddExpenseBottomSheet(
                             isSplit,
                             participantSplits,
                             unassignedSplitAmount,
-                            isWealth
+                            isWealth,
+                            baseNote
                         )
                         onDismiss()
                     }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(52.dp),
+                    .height(50.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = ElectricMint,
-                    contentColor = Color(0xFF0F141C)
+                    contentColor = Color(0xFF042013)
                 ),
-                shape = RoundedCornerShape(16.dp)
+                shape = KoshShapes.Pill
             ) {
                 Text(
                     text = if (isSplit) "Save & Track Split" else "Save Expense",

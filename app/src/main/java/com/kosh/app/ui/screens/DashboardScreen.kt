@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -41,18 +42,25 @@ import com.kosh.app.data.model.PaymentInstrumentEntity
 import com.kosh.app.data.model.TransactionEntity
 import com.kosh.app.data.model.isCreditOrInflow
 import com.kosh.app.data.model.displayAmount
+import com.kosh.app.ui.components.CategoryIconTile
 import com.kosh.app.ui.theme.AmberGold
+import com.kosh.app.ui.theme.AmberGoldContainer
 import com.kosh.app.ui.theme.CardBackground
+import com.kosh.app.ui.theme.CardBackgroundElevated
 import com.kosh.app.ui.theme.CardBorder
+import com.kosh.app.ui.theme.CardBorderSubtle
 import com.kosh.app.ui.theme.ElectricMint
 import com.kosh.app.ui.theme.ElectricMintContainer
+import com.kosh.app.ui.theme.KoshShapes
 import com.kosh.app.ui.theme.ObsidianBg
 import com.kosh.app.ui.theme.ObsidianSurface
 import com.kosh.app.ui.theme.PartnerPink
+import com.kosh.app.ui.theme.PartnerPinkContainer
 import com.kosh.app.ui.theme.RoyalBlue
 import com.kosh.app.ui.theme.TextMuted
 import com.kosh.app.ui.theme.TextPrimary
 import com.kosh.app.ui.theme.TextSecondary
+import com.kosh.app.ui.theme.Typography
 
 @Composable
 fun DashboardScreen(
@@ -61,6 +69,7 @@ fun DashboardScreen(
     netSpend: Double,
     grossSpend: Double,
     totalReceivables: Double,
+    monthTotalCredits: Double = 0.0,
     householdObligations: List<HouseholdObligationEntity>,
     paymentInstruments: List<PaymentInstrumentEntity>,
     transactions: List<TransactionEntity>,
@@ -89,25 +98,28 @@ fun DashboardScreen(
             .fillMaxSize()
             .background(ObsidianBg)
             .padding(horizontal = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+        verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
         item {
-            Spacer(modifier = Modifier.height(8.dp))
-            // Interactive Month Selector Header
-            Row(
+            Spacer(modifier = Modifier.height(4.dp))
+            // Minimalist Modern FinTech Header
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Column {
+                // Tier 1: Month Carousel & Currency Switcher
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        // Month Selector Carousel
                         IconButton(
                             onClick = onPreviousMonth,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(28.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ChevronLeft,
@@ -119,7 +131,7 @@ fun DashboardScreen(
 
                         Text(
                             text = monthFormattedTitle.uppercase(),
-                            fontSize = 15.sp,
+                            style = Typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = TextPrimary,
                             letterSpacing = 0.5.sp
@@ -127,7 +139,7 @@ fun DashboardScreen(
 
                         IconButton(
                             onClick = onNextMonth,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(28.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ChevronRight,
@@ -136,82 +148,105 @@ fun DashboardScreen(
                                 modifier = Modifier.size(18.dp)
                             )
                         }
+                    }
 
-                        // Currency Switcher Chip
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0xFF0F172A))
-                                .border(1.dp, AmberGold.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-                                .clickable { onOpenCurrencyPicker() }
-                                .padding(horizontal = 7.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = "${currency.symbol} ${currency.code} ▾",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = AmberGold
-                            )
-                        }
+                    // Currency Switcher Chip (Clean, non-slop pill)
+                    Box(
+                        modifier = Modifier
+                            .clip(KoshShapes.Chip)
+                            .background(CardBackgroundElevated)
+                            .border(0.5.dp, CardBorderSubtle, KoshShapes.Chip)
+                            .clickable { onOpenCurrencyPicker() }
+                            .padding(horizontal = 10.dp, vertical = 5.dp)
+                    ) {
+                        Text(
+                            text = "${currency.symbol} ${currency.code} ▾",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary
+                        )
                     }
                 }
 
+                // Tier 2: Action Toolbar with Scan SMS & Parser Lab
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Action Button: Parser Lab
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0xFF162032))
-                            .border(1.dp, CardBorder, RoundedCornerShape(12.dp))
-                            .clickable { onOpenParserLab() }
-                            .padding(horizontal = 9.dp, vertical = 6.dp)
+                    Text(
+                        text = "AUTO-TRACKED SMS",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextMuted,
+                        letterSpacing = 1.sp
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("🧪", fontSize = 12.sp)
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "Parser Lab",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = TextPrimary
-                            )
-                        }
-                    }
-
-                    // Action Button: Scan SMS
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0xFF162032))
-                            .border(1.dp, CardBorder, RoundedCornerShape(12.dp))
-                            .clickable(enabled = !isScanningSms) { onScanSms() }
-                            .padding(horizontal = 10.dp, vertical = 6.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            if (isScanningSms) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(13.dp),
-                                    color = ElectricMint,
-                                    strokeWidth = 2.dp
-                                )
-                            } else {
+                        // Action Button: Parser Lab
+                        Box(
+                            modifier = Modifier
+                                .clip(KoshShapes.Chip)
+                                .background(CardBackgroundElevated)
+                                .border(0.5.dp, CardBorderSubtle, KoshShapes.Chip)
+                                .clickable { onOpenParserLab() }
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
-                                    imageVector = Icons.Default.Refresh,
-                                    contentDescription = "Scan SMS",
-                                    tint = ElectricMint,
+                                    imageVector = Icons.Default.Tune,
+                                    contentDescription = "Parser Lab",
+                                    tint = TextSecondary,
                                     modifier = Modifier.size(13.dp)
                                 )
+                                Spacer(modifier = Modifier.width(5.dp))
+                                Text(
+                                    text = "Parser Lab",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = TextSecondary,
+                                    maxLines = 1,
+                                    softWrap = false
+                                )
                             }
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "Scan SMS",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = TextPrimary
-                            )
+                        }
+
+                        // Action Button: Scan SMS
+                        Box(
+                            modifier = Modifier
+                                .clip(KoshShapes.Chip)
+                                .background(CardBackgroundElevated)
+                                .border(0.5.dp, CardBorderSubtle, KoshShapes.Chip)
+                                .clickable(enabled = !isScanningSms) { onScanSms() }
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (isScanningSms) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(12.dp),
+                                        color = ElectricMint,
+                                        strokeWidth = 1.5.dp
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Default.Refresh,
+                                        contentDescription = "Scan SMS",
+                                        tint = ElectricMint,
+                                        modifier = Modifier.size(13.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(5.dp))
+                                Text(
+                                    text = if (isScanningSms) "Scanning..." else "Scan SMS",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = ElectricMint,
+                                    maxLines = 1,
+                                    softWrap = false
+                                )
+                            }
                         }
                     }
                 }
@@ -223,16 +258,12 @@ fun DashboardScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(28.dp))
-                    .background(
-                        Brush.linearGradient(
-                            listOf(Color(0xFF182132), Color(0xFF111723))
-                        )
-                    )
-                    .border(1.dp, CardBorder, RoundedCornerShape(28.dp))
-                    .padding(20.dp)
+                    .clip(KoshShapes.CardHero)
+                    .background(CardBackground)
+                    .border(0.5.dp, CardBorder, KoshShapes.CardHero)
+                    .padding(22.dp)
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -241,23 +272,22 @@ fun DashboardScreen(
                         Column {
                             Text(
                                 text = "My True Expense",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary
-                            )
-                            Text(
-                                text = "What actually came out of your pocket",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Normal,
-                                color = TextSecondary
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextSecondary,
+                                letterSpacing = 0.3.sp
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = "${currency.symbol}${netSpend.toInt()}",
-                                fontSize = 34.sp,
-                                fontWeight = FontWeight.Black,
-                                color = TextPrimary,
-                                letterSpacing = (-0.5).sp
+                                style = Typography.displayMedium,
+                                color = TextPrimary
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "What actually came out of your pocket",
+                                fontSize = 11.sp,
+                                color = TextMuted
                             )
                         }
 
@@ -268,17 +298,27 @@ fun DashboardScreen(
                                 fontWeight = FontWeight.Medium,
                                 color = TextMuted
                             )
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = "${currency.symbol}${grossSpend.toInt()}",
-                                fontSize = 15.sp,
+                                fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = TextSecondary
                             )
+                            if (monthTotalCredits > 0) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "+${currency.symbol}${monthTotalCredits.toInt()} Credits",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = ElectricMint
+                                )
+                            }
                         }
                     }
 
                     // Split Progress Bar
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -294,8 +334,8 @@ fun DashboardScreen(
                                 Text(
                                     text = "Pending from Friends",
                                     fontSize = 12.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = AmberGold
+                                    fontWeight = FontWeight.Medium,
+                                    color = TextSecondary
                                 )
                             }
                             Text(
@@ -310,15 +350,15 @@ fun DashboardScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(8.dp)
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(Color(0xFF1E293B))
+                                .height(6.dp)
+                                .clip(KoshShapes.Pill)
+                                .background(CardBackgroundElevated)
                         ) {
                             Box(
                                 modifier = Modifier
                                     .weight(netPercent.toFloat().coerceAtLeast(1f))
                                     .fillMaxSize()
-                                    .background(TextSecondary.copy(alpha = 0.8f))
+                                    .background(TextSecondary.copy(alpha = 0.7f))
                             )
                             Box(
                                 modifier = Modifier
@@ -358,8 +398,7 @@ fun DashboardScreen(
                 ) {
                     Text(
                         text = "FIXED MONTHLY EXPENSES & BILLS",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = Typography.labelSmall,
                         color = TextMuted,
                         letterSpacing = 1.sp
                     )
@@ -369,16 +408,16 @@ fun DashboardScreen(
                     ) {
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(RoyalBlue.copy(alpha = 0.15f))
+                                .clip(KoshShapes.Pill)
+                                .background(ElectricMintContainer)
                                 .clickable { onAddHousehold() }
-                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                                .padding(horizontal = 10.dp, vertical = 4.dp)
                         ) {
                             Text(
-                                text = "+ Add Expense",
+                                text = "+ Add",
                                 fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = RoyalBlue
+                                fontWeight = FontWeight.SemiBold,
+                                color = ElectricMint
                             )
                         }
                         Text(
@@ -393,9 +432,9 @@ fun DashboardScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(Color(0xFF131A26))
-                            .border(1.dp, CardBorder.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                            .clip(KoshShapes.Card)
+                            .background(CardBackground)
+                            .border(0.5.dp, CardBorderSubtle, KoshShapes.Card)
                             .clickable { onAddHousehold() }
                             .padding(20.dp),
                         contentAlignment = Alignment.Center
@@ -440,8 +479,7 @@ fun DashboardScreen(
                 ) {
                     Text(
                         text = "RECENT TRANSACTIONS (${monthFormattedTitle.uppercase()})",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = Typography.labelSmall,
                         color = TextMuted,
                         letterSpacing = 1.sp
                     )
@@ -458,9 +496,9 @@ fun DashboardScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(Color(0xFF111723))
-                            .border(1.dp, CardBorder.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                            .clip(KoshShapes.Card)
+                            .background(CardBackground)
+                            .border(0.5.dp, CardBorderSubtle, KoshShapes.Card)
                             .padding(20.dp),
                         contentAlignment = Alignment.Center
                     ) {
@@ -506,9 +544,9 @@ fun HouseholdCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(Color(0xFF131A26))
-            .border(1.dp, CardBorder, RoundedCornerShape(20.dp))
+            .clip(KoshShapes.Card)
+            .background(CardBackground)
+            .border(0.5.dp, CardBorderSubtle, KoshShapes.Card)
             .clickable { onClick() }
             .padding(14.dp)
     ) {
@@ -523,18 +561,18 @@ fun HouseholdCard(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(42.dp)
-                        .background(Color(0xFF1C2536), shape = RoundedCornerShape(12.dp)),
+                        .size(40.dp)
+                        .background(CardBackgroundElevated, shape = KoshShapes.IconTile),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = obligation.iconEmoji, fontSize = 20.sp)
+                    Text(text = obligation.iconEmoji, fontSize = 18.sp)
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
                         text = obligation.title,
                         fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.SemiBold,
                         color = TextPrimary
                     )
                     val dueText = if (obligation.isPaidThisMonth) "Paid this month" else "Due on ${obligation.dueDayOfMonth}th"
@@ -550,7 +588,7 @@ fun HouseholdCard(
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = "${currency.symbol}${obligation.totalAmount.toInt()}",
-                    fontSize = 14.sp,
+                    style = Typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary
                 )
@@ -558,8 +596,8 @@ fun HouseholdCard(
                 if (obligation.isPaidThisMonth) {
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(ElectricMint.copy(alpha = 0.15f))
+                            .clip(KoshShapes.Pill)
+                            .background(ElectricMintContainer)
                             .clickable { onUndo() }
                             .padding(horizontal = 8.dp, vertical = 3.dp)
                     ) {
@@ -567,13 +605,13 @@ fun HouseholdCard(
                             text = "✓ Paid · Undo",
                             fontSize = 11.sp,
                             color = ElectricMint,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
                 } else if (isNonSplittable) {
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
+                            .clip(KoshShapes.Pill)
                             .background(ElectricMint)
                             .clickable { onQuickPay() }
                             .padding(horizontal = 10.dp, vertical = 4.dp)
@@ -581,15 +619,15 @@ fun HouseholdCard(
                         Text(
                             text = "Mark Paid ✓",
                             fontSize = 11.sp,
-                            color = Color(0xFF0F141C),
+                            color = Color(0xFF042013),
                             fontWeight = FontWeight.Bold
                         )
                     }
                 } else {
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(ElectricMint.copy(alpha = 0.2f))
+                            .clip(KoshShapes.Pill)
+                            .background(ElectricMintContainer)
                             .clickable { onPay() }
                             .padding(horizontal = 10.dp, vertical = 4.dp)
                     ) {
@@ -597,7 +635,7 @@ fun HouseholdCard(
                             text = "Pay & Split →",
                             fontSize = 11.sp,
                             color = ElectricMint,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
                 }
@@ -615,11 +653,11 @@ fun TransactionRow(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
-            .background(Color(0x99111724))
-            .border(1.dp, CardBorder.copy(alpha = 0.6f), RoundedCornerShape(18.dp))
+            .clip(KoshShapes.Card)
+            .background(CardBackground)
+            .border(0.5.dp, CardBorderSubtle, KoshShapes.Card)
             .clickable { onClick() }
-            .padding(12.dp)
+            .padding(14.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -631,56 +669,37 @@ fun TransactionRow(
                 modifier = Modifier.weight(1f)
             ) {
                 val isCredit = transaction.isCreditOrInflow()
-                val icon = when {
-                    isCredit -> "💰"
-                    transaction.isAssetWealth -> "📈"
-                    transaction.category.contains("CAB") -> "🚕"
-                    transaction.category.contains("GIFT") -> "🎁"
-                    transaction.category.contains("PARTNER") -> "👨‍👩‍👧"
-                    transaction.category.contains("RENT") -> "🏠"
-                    transaction.category.contains("COOK") -> "🍳"
-                    transaction.category.contains("UTILITIES") -> "⚡"
-                    transaction.category.contains("GROCERIES") -> "🛒"
-                    transaction.category.contains("SHOPPING") -> "🛍️"
-                    else -> "💳"
-                }
-                Box(
-                    modifier = Modifier
-                        .size(38.dp)
-                        .background(
-                            if (isCredit) ElectricMint.copy(alpha = 0.2f) else Color(0xFF1A2232),
-                            shape = RoundedCornerShape(12.dp)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(text = icon, fontSize = 16.sp)
-                }
-                Spacer(modifier = Modifier.width(10.dp))
+                CategoryIconTile(
+                    categoryKeyOrName = if (isCredit) "CREDIT" else if (transaction.isAssetWealth) "SIP" else transaction.category,
+                    size = 40.dp,
+                    iconSize = 20.dp
+                )
+                Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
                         text = transaction.title,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
                         color = TextPrimary
                     )
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
                             text = transaction.instrumentName,
-                            fontSize = 10.sp,
-                            color = RoyalBlue
+                            fontSize = 11.sp,
+                            color = TextSecondary
                         )
                         if (transaction.hasSplit) {
                             Box(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(AmberGold.copy(alpha = 0.15f))
-                                    .padding(horizontal = 4.dp, vertical = 1.dp)
+                                    .clip(KoshShapes.Pill)
+                                    .background(AmberGoldContainer)
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
                             ) {
                                 Text(
-                                    text = "Split w/ Flatmate",
+                                    text = "Split",
                                     fontSize = 9.sp,
                                     color = AmberGold,
                                     fontWeight = FontWeight.SemiBold
@@ -688,30 +707,21 @@ fun TransactionRow(
                             }
                         } else if (transaction.isAssetWealth) {
                             Text(
-                                text = "• Automated SIP • Wealth",
-                                fontSize = 10.sp,
-                                color = TextSecondary
+                                text = "• Automated SIP",
+                                fontSize = 11.sp,
+                                color = TextMuted
                             )
                         } else if (transaction.category.contains("PARTNER") || transaction.note.contains("Partner") || transaction.note.contains("Family") || transaction.note.contains("Girlfriend")) {
                             val isFamily = transaction.note.contains("Family", ignoreCase = true)
                             val badgeColor = if (isFamily) ElectricMint else PartnerPink
+                            val badgeContainer = if (isFamily) ElectricMintContainer else PartnerPinkContainer
                             Box(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(badgeColor.copy(alpha = 0.18f))
-                                    .padding(horizontal = 4.dp, vertical = 1.dp)
+                                    .clip(KoshShapes.Pill)
+                                    .background(badgeContainer)
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
                             ) {
-                                val tagText = when {
-                                    transaction.note.isNotBlank() && !transaction.note.startsWith("Auto-parsed") -> {
-                                        when {
-                                            transaction.note.startsWith("Partner: ") -> "❤️ " + transaction.note
-                                            transaction.note.startsWith("Family: ") -> "👨‍👩‍👧 " + transaction.note
-                                            else -> transaction.note
-                                        }
-                                    }
-                                    isFamily -> "👨‍👩‍👧 Family Expense"
-                                    else -> "❤️ Partner & Family"
-                                }
+                                val tagText = if (isFamily) "Family" else "Partner & Family"
                                 Text(
                                     text = tagText,
                                     fontSize = 9.sp,
@@ -722,28 +732,22 @@ fun TransactionRow(
                         } else if (transaction.category.contains("GIFT") || transaction.note.startsWith("Gift")) {
                             Box(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(Color(0xFFF472B6).copy(alpha = 0.18f))
-                                    .padding(horizontal = 4.dp, vertical = 1.dp)
+                                    .clip(KoshShapes.Pill)
+                                    .background(PartnerPinkContainer)
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
                             ) {
-                                val tagText = when {
-                                    transaction.note.isNotBlank() && !transaction.note.startsWith("Auto-parsed") -> {
-                                        if (transaction.note.startsWith("🎁")) transaction.note else "🎁 ${transaction.note}"
-                                    }
-                                    else -> "🎁 Gift"
-                                }
                                 Text(
-                                    text = tagText,
+                                    text = "Gift",
                                     fontSize = 9.sp,
-                                    color = Color(0xFFF472B6),
+                                    color = PartnerPink,
                                     fontWeight = FontWeight.SemiBold
                                 )
                             }
                         } else if (transaction.note.isNotBlank() && !transaction.note.startsWith("Auto-parsed")) {
                             Text(
                                 text = "• ${transaction.note}",
-                                fontSize = 10.sp,
-                                color = TextSecondary
+                                fontSize = 11.sp,
+                                color = TextMuted
                             )
                         }
                     }
@@ -755,32 +759,32 @@ fun TransactionRow(
                     val amount = transaction.displayAmount()
                     Text(
                         text = "+${currency.symbol}${amount.toInt()}",
-                        fontSize = 13.sp,
+                        style = Typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = ElectricMint
                     )
                     Text(
-                        text = "Credit / Inflow",
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = ElectricMint.copy(alpha = 0.85f)
+                        text = "Credit",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = ElectricMint
                     )
                 } else if (transaction.isAssetWealth) {
                     Text(
                         text = "${currency.symbol}${transaction.grossAmount.toInt()}",
-                        fontSize = 12.sp,
+                        style = Typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = ElectricMint
+                        color = TextPrimary
                     )
                     Text(
                         text = "Auto-debited",
-                        fontSize = 9.sp,
+                        fontSize = 10.sp,
                         color = TextMuted
                     )
                 } else {
                     Text(
                         text = "-${currency.symbol}${transaction.grossAmount.toInt()}",
-                        fontSize = 12.sp,
+                        style = Typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary
                     )

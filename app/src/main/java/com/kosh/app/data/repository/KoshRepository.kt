@@ -38,7 +38,17 @@ class KoshRepository(
         db.transactionDao().getTransactionsForMonthFlow(startTime, endTime)
 
     fun getTrueNetExpenseForMonth(startTime: Long, endTime: Long): Flow<Double?> =
-        db.transactionDao().getTrueNetExpenseForMonthFlow(startTime, endTime)
+        kotlinx.coroutines.flow.combine(
+            db.transactionDao().getTrueNetExpenseForMonthFlow(startTime, endTime),
+            db.transactionDao().getRefundCreditsForMonthFlow(startTime, endTime)
+        ) { debits, refunds ->
+            val d = debits ?: 0.0
+            val r = refunds ?: 0.0
+            (d - r).coerceAtLeast(0.0)
+        }
+
+    fun getTotalCreditsForMonth(startTime: Long, endTime: Long): Flow<Double?> =
+        db.transactionDao().getTotalCreditsForMonthFlow(startTime, endTime)
 
     fun getGrossOutflowForMonth(startTime: Long, endTime: Long): Flow<Double?> =
         db.transactionDao().getGrossOutflowForMonthFlow(startTime, endTime)
@@ -48,6 +58,7 @@ class KoshRepository(
 
     // Database flows
     val allTransactions: Flow<List<TransactionEntity>> = db.transactionDao().getAllTransactionsFlow()
+    val allIgnoreRules: Flow<List<com.kosh.app.data.model.IgnoreRuleEntity>> = db.ignoreRuleDao().getAllRulesFlow()
     val recentTransactions: Flow<List<TransactionEntity>> = db.transactionDao().getRecentTransactionsFlow(10)
     val openSplitDebts: Flow<List<SplitDebtEntity>> = db.splitDebtDao().getOpenSplitDebtsFlow()
     val openPersonDebts: Flow<List<SplitDebtEntity>> = db.splitDebtDao().getOpenPersonDebtsFlow()
@@ -680,6 +691,40 @@ class KoshRepository(
 
     suspend fun updatePaymentInstrument(instrument: PaymentInstrumentEntity) {
         db.paymentInstrumentDao().updateInstrument(instrument)
+    }
+
+    // Ignore Rules Operations
+    suspend fun addIgnoreRule(pattern: String, isWholeWord: Boolean = false, isCaseSensitive: Boolean = false): Long {
+        return db.ignoreRuleDao().insertRule(
+            com.kosh.app.data.model.IgnoreRuleEntity(
+                pattern = pattern.trim(),
+                isWholeWord = isWholeWord,
+                isCaseSensitive = isCaseSensitive
+            )
+        )
+    }
+
+    suspend fun deleteIgnoreRule(rule: com.kosh.app.data.model.IgnoreRuleEntity) {
+        db.ignoreRuleDao().deleteRule(rule)
+    }
+
+    suspend fun deleteIgnoreRuleById(id: Long) {
+        db.ignoreRuleDao().deleteById(id)
+    }
+
+    suspend fun markTransactionAsCreditCardBill(transactionId: Long, isBillPayment: Boolean) {
+        val existing = db.transactionDao().getTransactionById(transactionId) ?: return
+        val updatedNote = if (isBillPayment) {
+            if (existing.note.contains("[CC_PAYMENT]")) existing.note else "${existing.note} [CC_PAYMENT]".trim()
+        } else {
+            existing.note.replace("[CC_PAYMENT]", "").trim()
+        }
+        val updated = existing.copy(
+            trueNetAmount = if (isBillPayment) 0.0 else existing.grossAmount,
+            category = if (isBillPayment) "BILL_PAYMENT" else existing.category,
+            note = updatedNote
+        )
+        db.transactionDao().updateTransaction(updated)
     }
 
     // Transaction Deletion (with permanent tombstone hash to prevent re-import on SMS scan)

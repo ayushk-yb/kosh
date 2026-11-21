@@ -39,11 +39,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kosh.app.ui.theme.AmberGold
-import com.kosh.app.ui.theme.CardBorder
+import com.kosh.app.ui.theme.CardBorderSubtle
 import com.kosh.app.ui.theme.ElectricMint
+import com.kosh.app.ui.theme.ElectricMintContainer
+import com.kosh.app.ui.theme.KoshShapes
 import com.kosh.app.ui.theme.SubSurface
 import com.kosh.app.ui.theme.TextMuted
-import com.kosh.app.ui.theme.TextSecondary
+import com.kosh.app.ui.theme.TextPrimary
 import com.kosh.app.ui.viewmodel.AppTab
 
 @Composable
@@ -53,35 +55,33 @@ fun BottomNavBar(
     onFabClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Outer unclipped container providing headroom for the floating FAB
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(92.dp)
+            .height(88.dp)
     ) {
-        // 1. Clipped background bar container (anchored to bottom)
+        // Nav bar container anchored to bottom
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(76.dp)
+                .height(72.dp)
                 .align(Alignment.BottomCenter)
-                .background(SubSurface.copy(alpha = 0.95f), shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+                .background(SubSurface.copy(alpha = 0.97f), shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
                 .border(
-                    width = 1.dp,
-                    color = CardBorder.copy(alpha = 0.5f),
+                    width = 0.5.dp,
+                    color = CardBorderSubtle,
                     shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
                 )
                 .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
         ) {
-            // Two equal-width wings (Left 50% & Right 50%) separated by a dedicated center gap
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(76.dp)
-                    .padding(bottom = 4.dp),
+                    .height(72.dp)
+                    .padding(bottom = 2.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Left Half: Home & Pending In
+                // Left Wing: Home & Shared Splits
                 Row(
                     modifier = Modifier.weight(1f),
                     horizontalArrangement = Arrangement.SpaceEvenly,
@@ -96,7 +96,7 @@ fun BottomNavBar(
 
                     NavItem(
                         icon = Icons.Default.People,
-                        label = "Shared Splits",
+                        label = "Splits",
                         isSelected = currentTab == AppTab.SPLITS,
                         hasBadge = true,
                         badgeColor = AmberGold,
@@ -104,10 +104,10 @@ fun BottomNavBar(
                     )
                 }
 
-                // Fixed Center Gap specifically for the FAB
-                Spacer(modifier = Modifier.width(68.dp))
+                // Dedicated center gap for floating FAB
+                Spacer(modifier = Modifier.width(64.dp))
 
-                // Right Half: Cards & Circle
+                // Right Wing: Cards & Breakdown
                 Row(
                     modifier = Modifier.weight(1f),
                     horizontalArrangement = Arrangement.SpaceEvenly,
@@ -122,7 +122,7 @@ fun BottomNavBar(
 
                     NavItem(
                         icon = Icons.Default.PieChart,
-                        label = "Breakdown",
+                        label = "Insights",
                         isSelected = currentTab == AppTab.ANALYTICS,
                         onClick = { onTabSelected(AppTab.ANALYTICS) }
                     )
@@ -130,18 +130,19 @@ fun BottomNavBar(
             }
         }
 
-        // 2. Floating Action Button (FAB): Unclipped, positioned at TopCenter of the outer container
+        // Floating Action Button (FAB)
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .size(54.dp)
+                .offset(y = 10.dp)
+                .size(52.dp)
                 .shadow(
-                    elevation = 14.dp,
-                    shape = RoundedCornerShape(18.dp),
-                    ambientColor = ElectricMint,
-                    spotColor = ElectricMint
+                    elevation = 8.dp,
+                    shape = KoshShapes.Pill,
+                    ambientColor = Color.Black.copy(alpha = 0.4f),
+                    spotColor = ElectricMint.copy(alpha = 0.25f)
                 )
-                .background(ElectricMint, shape = RoundedCornerShape(18.dp))
+                .background(ElectricMint, shape = KoshShapes.Pill)
                 .clickable(
                     indication = null,
                     interactionSource = remember { MutableInteractionSource() }
@@ -151,8 +152,8 @@ fun BottomNavBar(
             Icon(
                 imageVector = Icons.Default.Add,
                 contentDescription = "Log Expense",
-                tint = Color(0xFF0F141C),
-                modifier = Modifier.size(28.dp)
+                tint = Color(0xFF061A10),
+                modifier = Modifier.size(26.dp)
             )
         }
     }
@@ -178,32 +179,39 @@ private fun NavItem(
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() }
             ) { onClick() }
-            .padding(horizontal = 10.dp, vertical = 6.dp),
+            .padding(horizontal = 12.dp, vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Box(contentAlignment = Alignment.TopEnd) {
+        Box(
+            modifier = Modifier
+                .clip(KoshShapes.Pill)
+                .background(if (isSelected) ElectricMintContainer else Color.Transparent)
+                .padding(horizontal = 12.dp, vertical = 4.dp),
+            contentAlignment = Alignment.Center
+        ) {
             Icon(
                 imageVector = icon,
                 contentDescription = label,
                 tint = tintColor,
-                modifier = Modifier.size(22.dp)
+                modifier = Modifier.size(20.dp)
             )
             if (hasBadge) {
                 Box(
                     modifier = Modifier
-                        .size(7.dp)
+                        .size(6.dp)
                         .background(badgeColor, shape = CircleShape)
-                        .offset(x = 2.dp, y = (-2).dp)
+                        .align(Alignment.TopEnd)
+                        .offset(x = 4.dp, y = (-2).dp)
                 )
             }
         }
         Text(
             text = label,
-            fontSize = 10.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-            color = if (isSelected) ElectricMint else TextSecondary,
-            modifier = Modifier.padding(top = 3.dp)
+            fontSize = 11.sp,
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+            color = if (isSelected) TextPrimary else TextMuted,
+            modifier = Modifier.padding(top = 2.dp)
         )
     }
 }

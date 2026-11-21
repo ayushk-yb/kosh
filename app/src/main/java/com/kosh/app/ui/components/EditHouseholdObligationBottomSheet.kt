@@ -52,8 +52,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kosh.app.data.model.Currency
 import com.kosh.app.data.model.HouseholdObligationEntity
+import com.kosh.app.ui.theme.CardBackgroundElevated
 import com.kosh.app.ui.theme.CardBorder
+import com.kosh.app.ui.theme.CardBorderSubtle
 import com.kosh.app.ui.theme.ElectricMint
+import com.kosh.app.ui.theme.KoshShapes
 import com.kosh.app.ui.theme.ObsidianSurface
 import com.kosh.app.ui.theme.RoyalBlue
 import com.kosh.app.ui.theme.SubSurface
@@ -94,13 +97,21 @@ fun EditHouseholdObligationBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = SubSurface,
-        dragHandle = null
+        containerColor = ObsidianSurface,
+        shape = KoshShapes.Sheet,
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(vertical = 12.dp)
+                    .size(width = 36.dp, height = 4.dp)
+                    .background(TextMuted.copy(alpha = 0.4f), shape = KoshShapes.Pill)
+            )
+        }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(22.dp)
+                .padding(horizontal = 22.dp, vertical = 8.dp)
                 .verticalScroll(rememberScrollState())
                 .navigationBarsPadding()
                 .imePadding(),
@@ -150,9 +161,9 @@ fun EditHouseholdObligationBottomSheet(
                         val isSel = category.equals(cat, ignoreCase = true)
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(if (isSel) RoyalBlue.copy(alpha = 0.25f) else Color(0xFF131A26))
-                                .border(1.dp, if (isSel) RoyalBlue else CardBorder, RoundedCornerShape(8.dp))
+                                .clip(KoshShapes.Chip)
+                                .background(if (isSel) RoyalBlue.copy(alpha = 0.25f) else CardBackgroundElevated)
+                                .border(0.5.dp, if (isSel) RoyalBlue else CardBorderSubtle, KoshShapes.Chip)
                                 .clickable {
                                     category = cat
                                     title = name
@@ -168,7 +179,7 @@ fun EditHouseholdObligationBottomSheet(
                                         "Insurance" -> recipient = "Bank / Insurer"
                                     }
                                 }
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(text = emoji, fontSize = 12.sp)
@@ -193,13 +204,13 @@ fun EditHouseholdObligationBottomSheet(
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = ElectricMint,
-                    unfocusedBorderColor = CardBorder,
+                    unfocusedBorderColor = CardBorderSubtle,
                     focusedTextColor = TextPrimary,
                     unfocusedTextColor = TextPrimary,
-                    focusedContainerColor = ObsidianSurface,
-                    unfocusedContainerColor = ObsidianSurface
+                    focusedContainerColor = CardBackgroundElevated,
+                    unfocusedContainerColor = CardBackgroundElevated
                 ),
-                shape = RoundedCornerShape(12.dp)
+                shape = KoshShapes.Input
             )
 
             Row(
@@ -220,13 +231,13 @@ fun EditHouseholdObligationBottomSheet(
                     modifier = Modifier.weight(1.2f),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = ElectricMint,
-                        unfocusedBorderColor = CardBorder,
+                        unfocusedBorderColor = CardBorderSubtle,
                         focusedTextColor = TextPrimary,
                         unfocusedTextColor = TextPrimary,
-                        focusedContainerColor = ObsidianSurface,
-                        unfocusedContainerColor = ObsidianSurface
+                        focusedContainerColor = CardBackgroundElevated,
+                        unfocusedContainerColor = CardBackgroundElevated
                     ),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = KoshShapes.Input
                 )
 
                 OutlinedTextField(
@@ -246,13 +257,13 @@ fun EditHouseholdObligationBottomSheet(
                     modifier = Modifier.weight(0.8f),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = ElectricMint,
-                        unfocusedBorderColor = CardBorder,
+                        unfocusedBorderColor = CardBorderSubtle,
                         focusedTextColor = TextPrimary,
                         unfocusedTextColor = TextPrimary,
-                        focusedContainerColor = ObsidianSurface,
-                        unfocusedContainerColor = ObsidianSurface
+                        focusedContainerColor = CardBackgroundElevated,
+                        unfocusedContainerColor = CardBackgroundElevated
                     ),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = KoshShapes.Input
                 )
             }
 
@@ -265,13 +276,13 @@ fun EditHouseholdObligationBottomSheet(
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = ElectricMint,
-                    unfocusedBorderColor = CardBorder,
+                    unfocusedBorderColor = CardBorderSubtle,
                     focusedTextColor = TextPrimary,
                     unfocusedTextColor = TextPrimary,
-                    focusedContainerColor = ObsidianSurface,
-                    unfocusedContainerColor = ObsidianSurface
+                    focusedContainerColor = CardBackgroundElevated,
+                    unfocusedContainerColor = CardBackgroundElevated
                 ),
-                shape = RoundedCornerShape(12.dp)
+                shape = KoshShapes.Input
             )
 
             Spacer(modifier = Modifier.height(6.dp))
@@ -287,8 +298,8 @@ fun EditHouseholdObligationBottomSheet(
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = Color(0xFFEF4444)
                     ),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFEF4444).copy(alpha = 0.6f)),
-                    shape = RoundedCornerShape(14.dp)
+                    border = androidx.compose.foundation.BorderStroke(0.5.dp, Color(0xFFEF4444).copy(alpha = 0.6f)),
+                    shape = KoshShapes.Pill
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
@@ -327,14 +338,13 @@ fun EditHouseholdObligationBottomSheet(
                     modifier = Modifier.weight(2f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = ElectricMint,
-                        contentColor = Color(0xFF0F141C)
+                        contentColor = Color(0xFF090D14)
                     ),
-                    shape = RoundedCornerShape(14.dp)
+                    shape = KoshShapes.Pill
                 ) {
                     Text(
                         text = "Save Changes",
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF0F141C),
                         fontSize = 13.sp
                     )
                 }
@@ -346,6 +356,7 @@ fun EditHouseholdObligationBottomSheet(
         AlertDialog(
             onDismissRequest = { showDeleteConfirmDialog = false },
             containerColor = ObsidianSurface,
+            shape = KoshShapes.CardHero,
             title = {
                 Text(
                     text = "Delete Fixed Expense?",
@@ -371,7 +382,7 @@ fun EditHouseholdObligationBottomSheet(
                         containerColor = Color(0xFFEF4444),
                         contentColor = Color.White
                     ),
-                    shape = RoundedCornerShape(10.dp)
+                    shape = KoshShapes.Pill
                 ) {
                     Text("Delete", fontWeight = FontWeight.Bold)
                 }

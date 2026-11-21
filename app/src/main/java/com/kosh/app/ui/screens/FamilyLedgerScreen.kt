@@ -16,10 +16,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Balance
+import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.LocalBar
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -29,8 +31,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -38,8 +40,12 @@ import com.kosh.app.data.model.Currency
 import com.kosh.app.data.model.PersonEntity
 import com.kosh.app.data.model.PersonLedgerEntity
 import com.kosh.app.ui.theme.AmberGold
+import com.kosh.app.ui.theme.CardBackground
+import com.kosh.app.ui.theme.CardBackgroundElevated
 import com.kosh.app.ui.theme.CardBorder
+import com.kosh.app.ui.theme.CardBorderSubtle
 import com.kosh.app.ui.theme.ElectricMint
+import com.kosh.app.ui.theme.KoshShapes
 import com.kosh.app.ui.theme.ObsidianBg
 import com.kosh.app.ui.theme.PartnerPink
 import com.kosh.app.ui.theme.PurpleAccent
@@ -90,11 +96,11 @@ fun FamilyLedgerScreen(
                 if (circleMember != null) {
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color(0xFF22121E))
-                            .border(1.dp, PartnerPink.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+                            .clip(KoshShapes.Chip)
+                            .background(CardBackgroundElevated)
+                            .border(0.5.dp, PartnerPink.copy(alpha = 0.4f), KoshShapes.Chip)
                             .clickable { onOpenLinkMember() }
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
@@ -107,7 +113,7 @@ fun FamilyLedgerScreen(
                             Text(
                                 text = "Switch / Unlink",
                                 fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.SemiBold,
                                 color = PartnerPink
                             )
                         }
@@ -122,13 +128,9 @@ fun FamilyLedgerScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(26.dp))
-                        .background(
-                            Brush.linearGradient(
-                                listOf(Color(0xFF201322), Color(0xFF161522), Color(0xFF0F141E))
-                            )
-                        )
-                        .border(1.dp, CardBorder, RoundedCornerShape(26.dp))
+                        .clip(KoshShapes.CardHero)
+                        .background(CardBackgroundElevated)
+                        .border(0.5.dp, CardBorderSubtle, KoshShapes.CardHero)
                         .padding(24.dp)
                 ) {
                     Column(
@@ -139,9 +141,9 @@ fun FamilyLedgerScreen(
                         Box(
                             modifier = Modifier
                                 .size(56.dp)
-                                .clip(CircleShape)
+                                .clip(KoshShapes.IconTile)
                                 .background(PartnerPink.copy(alpha = 0.15f))
-                                .border(1.dp, PartnerPink.copy(alpha = 0.4f), CircleShape),
+                                .border(0.5.dp, PartnerPink.copy(alpha = 0.4f), KoshShapes.IconTile),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
@@ -169,8 +171,11 @@ fun FamilyLedgerScreen(
 
                         Button(
                             onClick = onOpenLinkMember,
-                            colors = ButtonDefaults.buttonColors(containerColor = PartnerPink),
-                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = PartnerPink,
+                                contentColor = Color.White
+                            ),
+                            shape = KoshShapes.Pill,
                             modifier = Modifier.padding(top = 4.dp)
                         ) {
                             Icon(
@@ -183,8 +188,7 @@ fun FamilyLedgerScreen(
                             Text(
                                 text = "Link or Add Companion",
                                 fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                fontWeight = FontWeight.Bold
                             )
                         }
                     }
@@ -197,13 +201,9 @@ fun FamilyLedgerScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(26.dp))
-                        .background(
-                            Brush.linearGradient(
-                                listOf(Color(0xFF22121E), Color(0xFF161522), Color(0xFF0F141E))
-                            )
-                        )
-                        .border(1.dp, CardBorder, RoundedCornerShape(26.dp))
+                        .clip(KoshShapes.CardHero)
+                        .background(CardBackgroundElevated)
+                        .border(0.5.dp, CardBorderSubtle, KoshShapes.CardHero)
                         .padding(20.dp)
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -219,7 +219,7 @@ fun FamilyLedgerScreen(
                                         .size(44.dp)
                                         .clip(CircleShape)
                                         .background(PartnerPink.copy(alpha = 0.15f))
-                                        .border(1.dp, PartnerPink.copy(alpha = 0.35f), CircleShape),
+                                        .border(0.5.dp, PartnerPink.copy(alpha = 0.35f), CircleShape),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
@@ -248,9 +248,9 @@ fun FamilyLedgerScreen(
                             // Status Chip
                             Box(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(Color(0xFF1E1724))
-                                    .border(1.dp, PartnerPink.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                                    .clip(KoshShapes.Chip)
+                                    .background(PartnerPink.copy(alpha = 0.15f))
+                                    .border(0.5.dp, PartnerPink.copy(alpha = 0.3f), KoshShapes.Chip)
                                     .padding(horizontal = 10.dp, vertical = 5.dp)
                             ) {
                                 Text(
@@ -266,9 +266,9 @@ fun FamilyLedgerScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(18.dp))
-                                .background(Color(0xFF0D121B))
-                                .border(1.dp, CardBorder.copy(alpha = 0.7f), RoundedCornerShape(18.dp))
+                                .clip(KoshShapes.SubCard)
+                                .background(CardBackground)
+                                .border(0.5.dp, CardBorderSubtle, KoshShapes.SubCard)
                                 .padding(16.dp)
                         ) {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -286,9 +286,9 @@ fun FamilyLedgerScreen(
                                     )
                                     Box(
                                         modifier = Modifier
-                                            .clip(RoundedCornerShape(6.dp))
+                                            .clip(KoshShapes.Chip)
                                             .background(AmberGold.copy(alpha = 0.15f))
-                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                            .padding(horizontal = 8.dp, vertical = 3.dp)
                                     ) {
                                         Text(
                                             text = "Discretionary / Gift",
@@ -326,8 +326,12 @@ fun FamilyLedgerScreen(
                         Button(
                             onClick = onRecordDeficit,
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF22121E)),
-                            shape = RoundedCornerShape(12.dp)
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = PartnerPink.copy(alpha = 0.18f),
+                                contentColor = PartnerPink
+                            ),
+                            border = androidx.compose.foundation.BorderStroke(0.5.dp, PartnerPink.copy(alpha = 0.4f)),
+                            shape = KoshShapes.Pill
                         ) {
                             Text(
                                 text = "+ Log Outlay / Gift for ${circleMember.name}",
@@ -345,7 +349,7 @@ fun FamilyLedgerScreen(
         item {
             Text(
                 text = "HOW KOSH TREATS CLOSE CIRCLE EXPENSES",
-                fontSize = 11.sp,
+                fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextMuted,
                 letterSpacing = 1.sp
@@ -354,7 +358,7 @@ fun FamilyLedgerScreen(
 
         item {
             DistinctionCard(
-                icon = "🎁",
+                icon = Icons.Default.CardGiftcard,
                 title = "1. Pure Gift / Support",
                 tagColor = PartnerPink,
                 description = "100% personal outlay, 0 expected back. Tagged for personal category analytics, never treated as a split debt."
@@ -363,7 +367,7 @@ fun FamilyLedgerScreen(
 
         item {
             DistinctionCard(
-                icon = "🍷",
+                icon = Icons.Default.LocalBar,
                 title = "2. Partial Gift / Partial Split",
                 tagColor = PurpleAccent,
                 description = "e.g. A shared hotel or dinner where your treat/gift is absorbed into your personal burn, and the rest is tracked without pressure."
@@ -372,7 +376,7 @@ fun FamilyLedgerScreen(
 
         item {
             DistinctionCard(
-                icon = "⚖️",
+                icon = Icons.Default.Balance,
                 title = "3. Shared Purchases & Discretionary Outlays",
                 tagColor = ElectricMint,
                 description = "Joint purchases and advance payments flow into a flexible running balance that absorbs surpluses and gifts without calendar month boundaries."
@@ -387,7 +391,7 @@ fun FamilyLedgerScreen(
 
 @Composable
 fun DistinctionCard(
-    icon: String,
+    icon: ImageVector,
     title: String,
     tagColor: Color,
     description: String
@@ -395,9 +399,9 @@ fun DistinctionCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(Color(0xFF131A26))
-            .border(1.dp, CardBorder, RoundedCornerShape(20.dp))
+            .clip(KoshShapes.SubCard)
+            .background(CardBackgroundElevated)
+            .border(0.5.dp, CardBorderSubtle, KoshShapes.SubCard)
             .padding(16.dp)
     ) {
         Row(
@@ -407,10 +411,17 @@ fun DistinctionCard(
             Box(
                 modifier = Modifier
                     .size(40.dp)
-                    .background(tagColor.copy(alpha = 0.15f), shape = RoundedCornerShape(12.dp)),
+                    .clip(KoshShapes.IconTile)
+                    .background(tagColor.copy(alpha = 0.15f))
+                    .border(0.5.dp, tagColor.copy(alpha = 0.3f), KoshShapes.IconTile),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = icon, fontSize = 18.sp)
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = tagColor,
+                    modifier = Modifier.size(20.dp)
+                )
             }
             Spacer(modifier = Modifier.width(14.dp))
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {

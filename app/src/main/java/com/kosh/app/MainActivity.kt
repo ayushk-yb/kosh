@@ -151,8 +151,11 @@ fun KoshApp(
     val monthTitle by viewModel.monthFormattedTitle.collectAsState()
     val monthNetSpend by viewModel.monthNetSpend.collectAsState()
     val monthGrossSpend by viewModel.monthGrossSpend.collectAsState()
+    val monthTotalCredits by viewModel.monthTotalCredits.collectAsState()
     val monthTransactions by viewModel.monthTransactions.collectAsState()
+    val allTransactions by viewModel.allTransactions.collectAsState()
     val isScanningSms by viewModel.isScanningSms.collectAsState()
+    val ignoreRules by viewModel.ignoreRules.collectAsState()
 
     // Comparison data for Category Analytics
     val comparisonYearMonth by viewModel.comparisonYearMonth.collectAsState()
@@ -248,6 +251,7 @@ fun KoshApp(
                         netSpend = monthNetSpend,
                         grossSpend = monthGrossSpend,
                         totalReceivables = totalReceivables,
+                        monthTotalCredits = monthTotalCredits,
                         householdObligations = householdObligations,
                         paymentInstruments = paymentInstruments,
                         transactions = monthTransactions,
@@ -286,9 +290,11 @@ fun KoshApp(
                     AppTab.CARDS -> CardsScreen(
                         currency = currency,
                         instruments = paymentInstruments,
-                        transactions = monthTransactions,
+                        transactions = allTransactions,
                         onAddCard = { showAddCardSheet = true },
-                        onEditCard = { inst -> editingInstrument = inst }
+                        onEditCard = { inst -> editingInstrument = inst },
+                        onTransactionClick = { tx -> editingTransaction = tx },
+                        onSyncCardsFromMessages = { viewModel.syncCardsFromTransactions() }
                     )
                     AppTab.ANALYTICS -> CategoryAnalyticsScreen(
                         currency = currency,
@@ -299,6 +305,7 @@ fun KoshApp(
                         selectedYearMonth = selectedYearMonth,
                         comparisonYearMonth = comparisonYearMonth,
                         customCategories = customCategories,
+                        allTransactions = allTransactions,
                         onPreviousMonth = { viewModel.goToPreviousMonth() },
                         onNextMonth = { viewModel.goToNextMonth() },
                         onSetComparisonToPreviousMonth = { viewModel.setComparisonToPreviousMonth() },
@@ -328,8 +335,8 @@ fun KoshApp(
                         onSaveExpenseCustomCategory = { title, amount, catName, inst, isSplit, person, splitAmt, isWealth ->
                             viewModel.addExpense(title, amount, catName, inst, isSplit, person, splitAmt, isWealth)
                         },
-                        onSaveExpenseWithSplits = { title, amount, catName, inst, isSplit, participants, unassignedSplit, isWealth ->
-                            viewModel.addExpenseWithSplits(title, amount, catName, inst, isSplit, participants, unassignedSplit, isWealth)
+                        onSaveExpenseWithSplits = { title, amount, catName, inst, isSplit, participants, unassignedSplit, isWealth, note ->
+                            viewModel.addExpenseWithSplits(title, amount, catName, inst, isSplit, participants, unassignedSplit, isWealth, note)
                         },
                         onAddNewPerson = { name, tag, phone, isPinned ->
                             viewModel.addPerson(name, tag, phone, isPinned)
@@ -418,9 +425,19 @@ fun KoshApp(
                 if (showParserLabSheet) {
                     SmsParserLabBottomSheet(
                         currency = currency,
+                        ignoreRules = ignoreRules,
                         onDismiss = { showParserLabSheet = false },
                         onImportTransaction = { parsed ->
                             viewModel.importParsedSms(parsed)
+                        },
+                        onAddIgnoreRule = { pattern, wholeWord, caseSensitive ->
+                            viewModel.addIgnoreRule(pattern, wholeWord, caseSensitive)
+                        },
+                        onDeleteIgnoreRule = { rule ->
+                            viewModel.deleteIgnoreRule(rule)
+                        },
+                        onRescanAllSms = {
+                            viewModel.scanSmsInbox(context, forceFullScan = true)
                         }
                     )
                 }
@@ -581,7 +598,7 @@ fun KoshApp(
                         instrument = inst,
                         currency = currency,
                         onDismiss = { editingInstrument = null },
-                        onSave = { bank, card, last4, isCredit, limit, cycle, due, upi ->
+                        onSave = { bank, card, last4, isCredit, limit, cycle, due, upi, cycleEnd ->
                             viewModel.updatePaymentInstrument(
                                 id = inst.id,
                                 bankName = bank,
@@ -591,7 +608,8 @@ fun KoshApp(
                                 creditLimit = limit,
                                 cycleStartDay = cycle,
                                 dueDay = due,
-                                upiHandle = upi
+                                upiHandle = upi,
+                                customCycleEndDay = cycleEnd
                             )
                         },
                         onDelete = {

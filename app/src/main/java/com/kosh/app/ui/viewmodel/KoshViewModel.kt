@@ -90,6 +90,15 @@ class KoshViewModel(
         repository.getGrossOutflowForMonth(start, end).map { it ?: 0.0 }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
+    val monthTotalCredits: StateFlow<Double> = selectedYearMonth.flatMapLatest { ym ->
+        val start = ym.atDay(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val end = ym.plusMonths(1).atDay(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        repository.getTotalCreditsForMonth(start, end).map { it ?: 0.0 }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+
+    val ignoreRules: StateFlow<List<com.kosh.app.data.model.IgnoreRuleEntity>> = repository.allIgnoreRules
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     // Month comparison selection for Category Analytics
     val comparisonYearMonth = MutableStateFlow(YearMonth.now().minusMonths(1))
 
@@ -595,10 +604,12 @@ class KoshViewModel(
         creditLimit: Double,
         cycleStartDay: Int,
         dueDay: Int,
-        upiHandle: String?
+        upiHandle: String?,
+        customCycleEndDay: Int? = null
     ) {
         viewModelScope.launch {
             val existing = repository.db.paymentInstrumentDao().getInstrumentById(id) ?: return@launch
+            val calculatedEndDay = customCycleEndDay ?: if (cycleStartDay == 1) 31 else (cycleStartDay - 1)
             val updated = existing.copy(
                 bankName = bankName.trim(),
                 cardOrAccountName = cardName.trim(),
@@ -606,12 +617,73 @@ class KoshViewModel(
                 instrumentType = if (isCreditCard) "CREDIT_CARD" else "BANK_ACCOUNT",
                 creditLimit = if (isCreditCard) creditLimit else 0.0,
                 cycleStartDay = cycleStartDay,
+                cycleEndDay = calculatedEndDay,
                 paymentDueDay = dueDay,
                 isPrimary = false,
                 upiHandle = upiHandle?.trim()?.ifEmpty { null }
             )
             repository.updatePaymentInstrument(updated)
-            emitMessage("Updated ${bankName.trim()} ${cardName.trim()}.")
+            emitMessage("Updated ${bankName.trim()} ${cardName.trim()} (Cycle: ${cycleStartDay}th to ${calculatedEndDay}th).")
+        }
+    }
+
+    fun syncCardsFromTransactions() {
+        viewModelScope.launch {
+            val transactions = repository.db.transactionDao().getAllTransactionsList()
+            val existingInstruments = repository.db.paymentInstrumentDao().getAllInstrumentsList()
+            val existingLast4s = existingInstruments.map { it.last4Digits }.filter { it.isNotBlank() }.toMutableSet()
+
+            var count = 0
+            for (tx in transactions) {
+                val textToScan = (tx.originalSms ?: "") + " " + tx.instrumentName + " " + tx.note
+                val last4 = SmsAutoScanner.extractLast4(textToScan)
+                if (!last4.isNullOrBlank() && !existingLast4s.contains(last4)) {
+                    val isCreditCard = SmsAutoScanner.isCreditCard(textToScan) || tx.instrumentName.contains("Card", ignoreCase = true)
+                    val bankName = SmsAutoScanner.identifyInstrument("", textToScan.lowercase(), last4, isCreditCard).substringBefore(" (")
+                    val cardName = if (isCreditCard) "$bankName Card" else "$bankName Account"
+
+                    val newInst = PaymentInstrumentEntity(
+                        bankName = bankName,
+                        cardOrAccountName = cardName,
+                        last4Digits = last4,
+                        instrumentType = if (isCreditCard) "CREDIT_CARD" else "BANK_ACCOUNT",
+                        creditLimit = if (isCreditCard) 100000.0 else 0.0,
+                        unbilledSpend = 0.0,
+                        badgeText = "SMS Detected"
+                    )
+                    repository.addPaymentInstrument(newInst)
+                    existingLast4s.add(last4)
+                    count++
+                }
+            }
+            if (count > 0) {
+                emitMessage("Discovered and added $count cards from messages!")
+            } else {
+                emitMessage("All cards from messages are synced.")
+            }
+        }
+    }
+
+    // Ignore / Exception Rules
+    fun addIgnoreRule(pattern: String, isWholeWord: Boolean = false, isCaseSensitive: Boolean = false) {
+        viewModelScope.launch {
+            repository.addIgnoreRule(pattern, isWholeWord, isCaseSensitive)
+            val desc = if (isWholeWord) "whole word" else "contains"
+            emitMessage("Added exception rule for '$pattern' ($desc).")
+        }
+    }
+
+    fun deleteIgnoreRule(rule: com.kosh.app.data.model.IgnoreRuleEntity) {
+        viewModelScope.launch {
+            repository.deleteIgnoreRule(rule)
+            emitMessage("Removed exception rule '${rule.pattern}'.")
+        }
+    }
+
+    fun markTransactionAsCreditCardBill(transactionId: Long, isBillPayment: Boolean) {
+        viewModelScope.launch {
+            repository.markTransactionAsCreditCardBill(transactionId, isBillPayment)
+            emitMessage(if (isBillPayment) "Linked to Credit Card Bill (excluded from expense total)." else "Unlinked from Credit Card Bill.")
         }
     }
 

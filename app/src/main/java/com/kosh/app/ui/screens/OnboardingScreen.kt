@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -42,11 +43,15 @@ import com.kosh.app.data.model.Currency
 import com.kosh.app.ui.theme.AmberGold
 import com.kosh.app.ui.theme.CardBackground
 import com.kosh.app.ui.theme.CardBorder
+import com.kosh.app.ui.theme.CardBorderSubtle
 import com.kosh.app.ui.theme.ElectricMint
+import com.kosh.app.ui.theme.ElectricMintContainer
+import com.kosh.app.ui.theme.KoshShapes
 import com.kosh.app.ui.theme.ObsidianBg
 import com.kosh.app.ui.theme.TextMuted
 import com.kosh.app.ui.theme.TextPrimary
 import com.kosh.app.ui.theme.TextSecondary
+import com.kosh.app.ui.theme.Typography
 
 @Composable
 fun OnboardingScreen(
@@ -71,11 +76,16 @@ fun OnboardingScreen(
             Box(
                 modifier = Modifier
                     .size(72.dp)
-                    .background(Color(0xFF14241D), shape = CircleShape)
-                    .border(2.dp, ElectricMint.copy(alpha = 0.5f), CircleShape),
+                    .background(ElectricMintContainer, shape = KoshShapes.Pill)
+                    .border(1.dp, ElectricMint.copy(alpha = 0.35f), KoshShapes.Pill),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "🏛️", fontSize = 32.sp)
+                Icon(
+                    imageVector = Icons.Default.AccountBalance,
+                    contentDescription = "Kosh Emblem",
+                    tint = ElectricMint,
+                    modifier = Modifier.size(34.dp)
+                )
             }
 
             Spacer(modifier = Modifier.height(20.dp))

@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
@@ -52,8 +53,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kosh.app.data.model.Currency
 import com.kosh.app.data.model.PaymentInstrumentEntity
+import com.kosh.app.ui.theme.CardBackgroundElevated
 import com.kosh.app.ui.theme.CardBorder
+import com.kosh.app.ui.theme.CardBorderSubtle
 import com.kosh.app.ui.theme.ElectricMint
+import com.kosh.app.ui.theme.KoshShapes
 import com.kosh.app.ui.theme.ObsidianSurface
 import com.kosh.app.ui.theme.SubSurface
 import com.kosh.app.ui.theme.TextMuted
@@ -74,7 +78,8 @@ fun EditPaymentInstrumentBottomSheet(
         limit: Double,
         cycleStartDay: Int,
         dueDay: Int,
-        upiHandle: String?
+        upiHandle: String?,
+        cycleEndDay: Int
     ) -> Unit,
     onDelete: () -> Unit
 ) {
@@ -86,6 +91,7 @@ fun EditPaymentInstrumentBottomSheet(
     var isCreditCard by remember { mutableStateOf(instrument.instrumentType == "CREDIT_CARD") }
     var creditLimitText by remember { mutableStateOf(instrument.creditLimit.toInt().toString()) }
     var cycleStartDayText by remember { mutableStateOf(instrument.cycleStartDay.toString()) }
+    var cycleEndDayText by remember { mutableStateOf(instrument.cycleEndDay.toString()) }
     var paymentDueDayText by remember { mutableStateOf(instrument.paymentDueDay.toString()) }
     var upiHandle by remember { mutableStateOf(instrument.upiHandle ?: "") }
 
@@ -94,13 +100,21 @@ fun EditPaymentInstrumentBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = SubSurface,
-        dragHandle = null
+        containerColor = ObsidianSurface,
+        shape = KoshShapes.Sheet,
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(vertical = 12.dp)
+                    .size(width = 36.dp, height = 4.dp)
+                    .background(TextMuted.copy(alpha = 0.4f), shape = KoshShapes.Pill)
+            )
+        }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp)
+                .padding(horizontal = 20.dp, vertical = 8.dp)
                 .verticalScroll(rememberScrollState())
                 .navigationBarsPadding()
                 .imePadding(),
@@ -146,13 +160,14 @@ fun EditPaymentInstrumentBottomSheet(
                 label = { Text("Bank / Issuer (e.g. HDFC, ICICI, SBI)", color = TextSecondary) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
+                shape = KoshShapes.Input,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = ElectricMint,
-                    unfocusedBorderColor = CardBorder,
+                    unfocusedBorderColor = CardBorderSubtle,
                     focusedTextColor = TextPrimary,
                     unfocusedTextColor = TextPrimary,
-                    focusedContainerColor = ObsidianSurface,
-                    unfocusedContainerColor = ObsidianSurface
+                    focusedContainerColor = CardBackgroundElevated,
+                    unfocusedContainerColor = CardBackgroundElevated
                 )
             )
 
@@ -163,13 +178,14 @@ fun EditPaymentInstrumentBottomSheet(
                 label = { Text("Card / Account Nickname (e.g. Millennia, Salary A/C)", color = TextSecondary) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
+                shape = KoshShapes.Input,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = ElectricMint,
-                    unfocusedBorderColor = CardBorder,
+                    unfocusedBorderColor = CardBorderSubtle,
                     focusedTextColor = TextPrimary,
                     unfocusedTextColor = TextPrimary,
-                    focusedContainerColor = ObsidianSurface,
-                    unfocusedContainerColor = ObsidianSurface
+                    focusedContainerColor = CardBackgroundElevated,
+                    unfocusedContainerColor = CardBackgroundElevated
                 )
             )
 
@@ -181,13 +197,14 @@ fun EditPaymentInstrumentBottomSheet(
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth(),
+                shape = KoshShapes.Input,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = ElectricMint,
-                    unfocusedBorderColor = CardBorder,
+                    unfocusedBorderColor = CardBorderSubtle,
                     focusedTextColor = TextPrimary,
                     unfocusedTextColor = TextPrimary,
-                    focusedContainerColor = ObsidianSurface,
-                    unfocusedContainerColor = ObsidianSurface
+                    focusedContainerColor = CardBackgroundElevated,
+                    unfocusedContainerColor = CardBackgroundElevated
                 )
             )
 
@@ -200,53 +217,108 @@ fun EditPaymentInstrumentBottomSheet(
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
+                    shape = KoshShapes.Input,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = ElectricMint,
-                        unfocusedBorderColor = CardBorder,
+                        unfocusedBorderColor = CardBorderSubtle,
                         focusedTextColor = TextPrimary,
                         unfocusedTextColor = TextPrimary,
-                        focusedContainerColor = ObsidianSurface,
-                        unfocusedContainerColor = ObsidianSurface
+                        focusedContainerColor = CardBackgroundElevated,
+                        unfocusedContainerColor = CardBackgroundElevated
                     )
                 )
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     OutlinedTextField(
                         value = cycleStartDayText,
-                        onValueChange = { if (it.isEmpty() || (it.toIntOrNull() in 1..31)) cycleStartDayText = it },
-                        label = { Text("Cycle Day", color = TextSecondary) },
+                        onValueChange = { input ->
+                            if (input.isEmpty() || (input.toIntOrNull() in 1..31)) {
+                                cycleStartDayText = input
+                                val s = input.toIntOrNull()
+                                if (s != null) {
+                                    cycleEndDayText = if (s == 1) "31" else (s - 1).toString()
+                                }
+                            }
+                        },
+                        label = { Text("Cycle Start", color = TextSecondary, fontSize = 11.sp) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.weight(1f),
+                        shape = KoshShapes.Input,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = ElectricMint,
-                            unfocusedBorderColor = CardBorder,
+                            unfocusedBorderColor = CardBorderSubtle,
                             focusedTextColor = TextPrimary,
                             unfocusedTextColor = TextPrimary,
-                            focusedContainerColor = ObsidianSurface,
-                            unfocusedContainerColor = ObsidianSurface
+                            focusedContainerColor = CardBackgroundElevated,
+                            unfocusedContainerColor = CardBackgroundElevated
+                        )
+                    )
+
+                    OutlinedTextField(
+                        value = cycleEndDayText,
+                        onValueChange = { if (it.isEmpty() || (it.toIntOrNull() in 1..31)) cycleEndDayText = it },
+                        label = { Text("Cycle End", color = TextSecondary, fontSize = 11.sp) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.weight(1f),
+                        shape = KoshShapes.Input,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = ElectricMint,
+                            unfocusedBorderColor = CardBorderSubtle,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary,
+                            focusedContainerColor = CardBackgroundElevated,
+                            unfocusedContainerColor = CardBackgroundElevated
                         )
                     )
 
                     OutlinedTextField(
                         value = paymentDueDayText,
                         onValueChange = { if (it.isEmpty() || (it.toIntOrNull() in 1..31)) paymentDueDayText = it },
-                        label = { Text("Due Day", color = TextSecondary) },
+                        label = { Text("Due Day", color = TextSecondary, fontSize = 11.sp) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.weight(1f),
+                        shape = KoshShapes.Input,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = ElectricMint,
-                            unfocusedBorderColor = CardBorder,
+                            unfocusedBorderColor = CardBorderSubtle,
                             focusedTextColor = TextPrimary,
                             unfocusedTextColor = TextPrimary,
-                            focusedContainerColor = ObsidianSurface,
-                            unfocusedContainerColor = ObsidianSurface
+                            focusedContainerColor = CardBackgroundElevated,
+                            unfocusedContainerColor = CardBackgroundElevated
                         )
                     )
+                }
+
+                // Cycle preview chip
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(KoshShapes.Chip)
+                        .background(CardBackgroundElevated)
+                        .border(0.5.dp, CardBorderSubtle, KoshShapes.Chip)
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.CalendarToday,
+                            contentDescription = null,
+                            tint = ElectricMint,
+                            modifier = Modifier.size(13.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Billing Cycle: ${cycleStartDayText.ifEmpty { "1" }}th to ${cycleEndDayText.ifEmpty { "31" }}th of every month",
+                            fontSize = 11.sp,
+                            color = ElectricMint,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
 
@@ -257,13 +329,14 @@ fun EditPaymentInstrumentBottomSheet(
                 label = { Text("Linked UPI Handle (e.g. name@okhdfcbank)", color = TextSecondary) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
+                shape = KoshShapes.Input,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = ElectricMint,
-                    unfocusedBorderColor = CardBorder,
+                    unfocusedBorderColor = CardBorderSubtle,
                     focusedTextColor = TextPrimary,
                     unfocusedTextColor = TextPrimary,
-                    focusedContainerColor = ObsidianSurface,
-                    unfocusedContainerColor = ObsidianSurface
+                    focusedContainerColor = CardBackgroundElevated,
+                    unfocusedContainerColor = CardBackgroundElevated
                 )
             )
 
@@ -280,8 +353,8 @@ fun EditPaymentInstrumentBottomSheet(
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = Color(0xFFEF4444)
                     ),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFEF4444).copy(alpha = 0.6f)),
-                    shape = RoundedCornerShape(14.dp)
+                    border = androidx.compose.foundation.BorderStroke(0.5.dp, Color(0xFFEF4444).copy(alpha = 0.6f)),
+                    shape = KoshShapes.Pill
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
@@ -301,7 +374,8 @@ fun EditPaymentInstrumentBottomSheet(
                 Button(
                     onClick = {
                         val limit = creditLimitText.toDoubleOrNull() ?: instrument.creditLimit
-                        val cycleDay = cycleStartDayText.toIntOrNull() ?: instrument.cycleStartDay
+                        val cycleStartDay = cycleStartDayText.toIntOrNull() ?: instrument.cycleStartDay
+                        val cycleEndDay = cycleEndDayText.toIntOrNull() ?: (if (cycleStartDay == 1) 31 else cycleStartDay - 1)
                         val dueDay = paymentDueDayText.toIntOrNull() ?: instrument.paymentDueDay
 
                         onSave(
@@ -310,18 +384,19 @@ fun EditPaymentInstrumentBottomSheet(
                             last4.trim().ifEmpty { instrument.last4Digits },
                             isCreditCard,
                             limit,
-                            cycleDay,
+                            cycleStartDay,
                             dueDay,
-                            upiHandle.trim().ifEmpty { null }
+                            upiHandle.trim().ifEmpty { null },
+                            cycleEndDay
                         )
                         onDismiss()
                     },
                     modifier = Modifier.weight(2f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = ElectricMint,
-                        contentColor = Color(0xFF0F141C)
+                        contentColor = Color(0xFF090D14)
                     ),
-                    shape = RoundedCornerShape(14.dp)
+                    shape = KoshShapes.Pill
                 ) {
                     Text(
                         text = "Save Changes",
@@ -337,6 +412,7 @@ fun EditPaymentInstrumentBottomSheet(
         AlertDialog(
             onDismissRequest = { showDeleteConfirmDialog = false },
             containerColor = ObsidianSurface,
+            shape = KoshShapes.CardHero,
             title = {
                 Text(
                     text = "Remove Instrument?",
@@ -362,7 +438,7 @@ fun EditPaymentInstrumentBottomSheet(
                         containerColor = Color(0xFFEF4444),
                         contentColor = Color.White
                     ),
-                    shape = RoundedCornerShape(10.dp)
+                    shape = KoshShapes.Pill
                 ) {
                     Text("Remove", fontWeight = FontWeight.Bold)
                 }

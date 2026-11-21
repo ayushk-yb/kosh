@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.AlertDialog
@@ -27,15 +25,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kosh.app.data.model.Currency
-import com.kosh.app.ui.theme.AmberGold
 import com.kosh.app.ui.theme.CardBackground
+import com.kosh.app.ui.theme.CardBackgroundElevated
 import com.kosh.app.ui.theme.CardBorder
+import com.kosh.app.ui.theme.CardBorderSubtle
 import com.kosh.app.ui.theme.ElectricMint
+import com.kosh.app.ui.theme.ElectricMintContainer
+import com.kosh.app.ui.theme.KoshShapes
 import com.kosh.app.ui.theme.ObsidianSurface
 import com.kosh.app.ui.theme.TextPrimary
 import com.kosh.app.ui.theme.TextSecondary
@@ -49,6 +49,7 @@ fun CurrencySelectorModal(
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = ObsidianSurface,
+        shape = KoshShapes.CardHero,
         title = {
             Text(
                 text = "Select Base Currency",
@@ -75,12 +76,12 @@ fun CurrencySelectorModal(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(if (isSelected) ElectricMint.copy(alpha = 0.15f) else CardBackground)
+                                .clip(KoshShapes.SubCard)
+                                .background(if (isSelected) ElectricMintContainer else CardBackground)
                                 .border(
-                                    width = 1.dp,
-                                    color = if (isSelected) ElectricMint else CardBorder,
-                                    shape = RoundedCornerShape(12.dp)
+                                    width = 0.5.dp,
+                                    color = if (isSelected) ElectricMint.copy(alpha = 0.5f) else CardBorderSubtle,
+                                    shape = KoshShapes.SubCard
                                 )
                                 .clickable {
                                     onSelectCurrency(curr)
@@ -94,13 +95,13 @@ fun CurrencySelectorModal(
                                 Box(
                                     modifier = Modifier
                                         .size(32.dp)
-                                        .background(AmberGold.copy(alpha = 0.15f), shape = CircleShape),
+                                        .background(if (isSelected) ElectricMintContainer else CardBackgroundElevated, shape = KoshShapes.Pill),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
                                         text = curr.symbol.trim(),
                                         fontWeight = FontWeight.Bold,
-                                        color = AmberGold,
+                                        color = if (isSelected) ElectricMint else TextPrimary,
                                         fontSize = 14.sp
                                     )
                                 }

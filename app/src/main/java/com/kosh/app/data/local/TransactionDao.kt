@@ -23,17 +23,23 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE id = :id")
     suspend fun getTransactionById(id: Long): TransactionEntity?
 
-    @Query("SELECT SUM(grossAmount) FROM transactions WHERE isAssetWealth = 0 AND category != 'INFLOW' AND category != 'CREDIT'")
+    @Query("SELECT SUM(grossAmount) FROM transactions WHERE isAssetWealth = 0 AND category != 'INFLOW' AND category != 'CREDIT' AND category != 'BILL_PAYMENT' AND note NOT LIKE '%[CC_PAYMENT]%'")
     fun getTotalGrossOutflowFlow(): Flow<Double?>
 
-    @Query("SELECT SUM(grossAmount) FROM transactions WHERE isAssetWealth = 0 AND category != 'INFLOW' AND category != 'CREDIT' AND timestamp >= :startTime AND timestamp < :endTime")
+    @Query("SELECT SUM(grossAmount) FROM transactions WHERE isAssetWealth = 0 AND category != 'INFLOW' AND category != 'CREDIT' AND category != 'BILL_PAYMENT' AND note NOT LIKE '%[CC_PAYMENT]%' AND timestamp >= :startTime AND timestamp < :endTime")
     fun getGrossOutflowForMonthFlow(startTime: Long, endTime: Long): Flow<Double?>
 
-    @Query("SELECT SUM(trueNetAmount) FROM transactions WHERE isAssetWealth = 0 AND category != 'INFLOW' AND category != 'CREDIT'")
+    @Query("SELECT SUM(trueNetAmount) FROM transactions WHERE isAssetWealth = 0 AND category != 'INFLOW' AND category != 'CREDIT' AND category != 'BILL_PAYMENT' AND note NOT LIKE '%[CC_PAYMENT]%'")
     fun getTotalTrueNetExpenseFlow(): Flow<Double?>
 
-    @Query("SELECT SUM(trueNetAmount) FROM transactions WHERE isAssetWealth = 0 AND category != 'INFLOW' AND category != 'CREDIT' AND timestamp >= :startTime AND timestamp < :endTime")
+    @Query("SELECT SUM(trueNetAmount) FROM transactions WHERE isAssetWealth = 0 AND category != 'INFLOW' AND category != 'CREDIT' AND category != 'BILL_PAYMENT' AND note NOT LIKE '%[CC_PAYMENT]%' AND timestamp >= :startTime AND timestamp < :endTime")
     fun getTrueNetExpenseForMonthFlow(startTime: Long, endTime: Long): Flow<Double?>
+
+    @Query("SELECT SUM(grossAmount) FROM transactions WHERE isAssetWealth = 0 AND (category = 'REFUND' OR note LIKE '%[OFFSET_EXPENSE]%' OR title LIKE '%Refund%' OR title LIKE '%Reversal%' OR title LIKE '%Cashback%') AND timestamp >= :startTime AND timestamp < :endTime")
+    fun getRefundCreditsForMonthFlow(startTime: Long, endTime: Long): Flow<Double?>
+
+    @Query("SELECT SUM(grossAmount) FROM transactions WHERE category != 'BILL_PAYMENT' AND note NOT LIKE '%[CC_PAYMENT]%' AND (category = 'INFLOW' OR category = 'CREDIT' OR category = 'REFUND' OR (note LIKE '%Credit%' AND note NOT LIKE '%Credit Card%') OR (title LIKE '%Credit%' AND title NOT LIKE '%Credit Card%') OR title LIKE '%Refund%') AND timestamp >= :startTime AND timestamp < :endTime")
+    fun getTotalCreditsForMonthFlow(startTime: Long, endTime: Long): Flow<Double?>
 
     @Query("SELECT SUM(grossAmount) FROM transactions WHERE isAssetWealth = 1")
     fun getTotalWealthInvestmentFlow(): Flow<Double?>

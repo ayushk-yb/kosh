@@ -23,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Contacts
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.PushPin
@@ -52,8 +53,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kosh.app.data.model.PersonEntity
 import com.kosh.app.ui.theme.AmberGold
+import com.kosh.app.ui.theme.CardBackgroundElevated
 import com.kosh.app.ui.theme.CardBorder
+import com.kosh.app.ui.theme.CardBorderSubtle
 import com.kosh.app.ui.theme.ElectricMint
+import com.kosh.app.ui.theme.ElectricMintContainer
+import com.kosh.app.ui.theme.KoshShapes
 import com.kosh.app.ui.theme.ObsidianSurface
 import com.kosh.app.ui.theme.RoyalBlue
 import com.kosh.app.ui.theme.SubSurface
@@ -96,12 +101,20 @@ fun PersonPickerModal(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = ObsidianSurface,
-        dragHandle = null
+        shape = KoshShapes.Sheet,
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(vertical = 12.dp)
+                    .size(width = 36.dp, height = 4.dp)
+                    .background(TextMuted.copy(alpha = 0.4f), shape = KoshShapes.Pill)
+            )
+        }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
+                .padding(horizontal = 20.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             // Header
@@ -120,25 +133,35 @@ fun PersonPickerModal(
                     // Contact Picker shortcut
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color(0xFF1E293B))
-                            .border(1.dp, CardBorder, RoundedCornerShape(8.dp))
+                            .clip(KoshShapes.Chip)
+                            .background(CardBackgroundElevated)
+                            .border(0.5.dp, CardBorderSubtle, KoshShapes.Chip)
                             .clickable { onPickContact() }
-                            .padding(horizontal = 8.dp, vertical = 6.dp)
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
                     ) {
-                        Text(
-                            text = "📱 Contacts",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Contacts,
+                                contentDescription = null,
+                                tint = TextSecondary,
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Contacts",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextPrimary
+                            )
+                        }
                     }
                     Spacer(modifier = Modifier.width(6.dp))
                     // + Add Person shortcut
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(ElectricMint.copy(alpha = 0.15f))
+                            .clip(KoshShapes.Chip)
+                            .background(ElectricMintContainer)
+                            .border(0.5.dp, ElectricMint.copy(alpha = 0.4f), KoshShapes.Chip)
                             .clickable { showAddPersonDialog = true }
                             .padding(horizontal = 10.dp, vertical = 6.dp)
                     ) {
@@ -147,12 +170,12 @@ fun PersonPickerModal(
                                 imageVector = Icons.Default.Add,
                                 contentDescription = null,
                                 tint = ElectricMint,
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier.size(14.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "New",
-                                fontSize = 12.sp,
+                                fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = ElectricMint
                             )
@@ -188,12 +211,12 @@ fun PersonPickerModal(
                             val isSelected = currentSelectedIds.contains(p.id)
                             Box(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(if (isSelected) ElectricMint.copy(alpha = 0.2f) else SubSurface)
+                                    .clip(KoshShapes.Chip)
+                                    .background(if (isSelected) ElectricMintContainer else CardBackgroundElevated)
                                     .border(
-                                        1.dp,
-                                        if (isSelected) ElectricMint else CardBorder,
-                                        RoundedCornerShape(12.dp)
+                                        0.5.dp,
+                                        if (isSelected) ElectricMint else CardBorderSubtle,
+                                        KoshShapes.Chip
                                     )
                                     .clickable {
                                         if (isMultiSelect) {
@@ -207,7 +230,7 @@ fun PersonPickerModal(
                                             onDismiss()
                                         }
                                     }
-                                    .padding(horizontal = 10.dp, vertical = 6.dp)
+                                    .padding(horizontal = 11.dp, vertical = 6.dp)
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Box(
@@ -264,13 +287,13 @@ fun PersonPickerModal(
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = ElectricMint,
-                    unfocusedBorderColor = CardBorder,
+                    unfocusedBorderColor = CardBorderSubtle,
                     focusedTextColor = TextPrimary,
                     unfocusedTextColor = TextPrimary,
-                    focusedContainerColor = Color(0xFF131A26),
-                    unfocusedContainerColor = Color(0xFF131A26)
+                    focusedContainerColor = CardBackgroundElevated,
+                    unfocusedContainerColor = CardBackgroundElevated
                 ),
-                shape = RoundedCornerShape(12.dp)
+                shape = KoshShapes.Input
             )
 
             // Person List
@@ -290,8 +313,9 @@ fun PersonPickerModal(
                         Spacer(modifier = Modifier.height(8.dp))
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(ElectricMint.copy(alpha = 0.15f))
+                                .clip(KoshShapes.Chip)
+                                .background(ElectricMintContainer)
+                                .border(0.5.dp, ElectricMint.copy(alpha = 0.4f), KoshShapes.Chip)
                                 .clickable { showAddPersonDialog = true }
                                 .padding(horizontal = 12.dp, vertical = 6.dp)
                         ) {
@@ -316,12 +340,12 @@ fun PersonPickerModal(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(if (isSelected) ElectricMint.copy(alpha = 0.12f) else Color(0xFF131A26))
+                                .clip(KoshShapes.SubCard)
+                                .background(if (isSelected) ElectricMintContainer else CardBackgroundElevated)
                                 .border(
-                                    1.dp,
-                                    if (isSelected) ElectricMint else CardBorder,
-                                    RoundedCornerShape(14.dp)
+                                    0.5.dp,
+                                    if (isSelected) ElectricMint else CardBorderSubtle,
+                                    KoshShapes.SubCard
                                 )
                                 .clickable {
                                     if (isMultiSelect) {
@@ -367,8 +391,9 @@ fun PersonPickerModal(
                                             Spacer(modifier = Modifier.width(6.dp))
                                             Box(
                                                 modifier = Modifier
-                                                    .clip(RoundedCornerShape(6.dp))
+                                                    .clip(KoshShapes.Chip)
                                                     .background(Color(0xFF1C2738))
+                                                    .border(0.5.dp, RoyalBlue.copy(alpha = 0.3f), KoshShapes.Chip)
                                                     .padding(horizontal = 6.dp, vertical = 2.dp)
                                             ) {
                                                 Text(
@@ -428,13 +453,15 @@ fun PersonPickerModal(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = ElectricMint),
-                    shape = RoundedCornerShape(14.dp)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ElectricMint,
+                        contentColor = Color(0xFF090D14)
+                    ),
+                    shape = KoshShapes.Pill
                 ) {
                     Text(
                         text = "Confirm Selection (${currentSelectedIds.size})",
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF0F141C),
                         fontSize = 14.sp
                     )
                 }

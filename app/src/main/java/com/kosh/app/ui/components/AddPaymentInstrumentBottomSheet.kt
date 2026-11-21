@@ -46,8 +46,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kosh.app.data.model.Currency
 import com.kosh.app.ui.theme.AmberGold
+import com.kosh.app.ui.theme.CardBackgroundElevated
 import com.kosh.app.ui.theme.CardBorder
+import com.kosh.app.ui.theme.CardBorderSubtle
 import com.kosh.app.ui.theme.ElectricMint
+import com.kosh.app.ui.theme.ElectricMintContainer
+import com.kosh.app.ui.theme.KoshShapes
 import com.kosh.app.ui.theme.ObsidianSurface
 import com.kosh.app.ui.theme.RoyalBlue
 import com.kosh.app.ui.theme.TextMuted
@@ -85,12 +89,20 @@ fun AddPaymentInstrumentBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = ObsidianSurface,
-        dragHandle = null
+        shape = KoshShapes.Sheet,
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(vertical = 12.dp)
+                    .size(width = 36.dp, height = 4.dp)
+                    .background(TextMuted.copy(alpha = 0.4f), shape = KoshShapes.Pill)
+            )
+        }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(22.dp),
+                .padding(horizontal = 22.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             // Header
@@ -118,41 +130,41 @@ fun AddPaymentInstrumentBottomSheet(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xFF0F1521))
-                    .border(1.dp, CardBorder, RoundedCornerShape(10.dp))
+                    .clip(KoshShapes.Pill)
+                    .background(CardBackgroundElevated)
+                    .border(0.5.dp, CardBorderSubtle, KoshShapes.Pill)
                     .padding(3.dp)
             ) {
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(if (isCreditCard) ElectricMint else Color.Transparent)
+                        .clip(KoshShapes.Pill)
+                        .background(if (isCreditCard) ElectricMintContainer else Color.Transparent)
                         .clickable { isCreditCard = true }
-                        .padding(vertical = 7.dp),
+                        .padding(vertical = 8.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "Credit Card",
                         fontSize = 12.sp,
-                        fontWeight = if (isCreditCard) FontWeight.Bold else FontWeight.Medium,
-                        color = if (isCreditCard) Color(0xFF0F141C) else TextSecondary
+                        fontWeight = if (isCreditCard) FontWeight.SemiBold else FontWeight.Medium,
+                        color = if (isCreditCard) TextPrimary else TextSecondary
                     )
                 }
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(if (!isCreditCard) ElectricMint else Color.Transparent)
+                        .clip(KoshShapes.Pill)
+                        .background(if (!isCreditCard) ElectricMintContainer else Color.Transparent)
                         .clickable { isCreditCard = false }
-                        .padding(vertical = 7.dp),
+                        .padding(vertical = 8.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "Bank Account / UPI",
                         fontSize = 12.sp,
-                        fontWeight = if (!isCreditCard) FontWeight.Bold else FontWeight.Medium,
-                        color = if (!isCreditCard) Color(0xFF0F141C) else TextSecondary
+                        fontWeight = if (!isCreditCard) FontWeight.SemiBold else FontWeight.Medium,
+                        color = if (!isCreditCard) TextPrimary else TextSecondary
                     )
                 }
             }
@@ -174,11 +186,11 @@ fun AddPaymentInstrumentBottomSheet(
                         val isSel = bankName.equals(b, ignoreCase = true)
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(if (isSel) RoyalBlue.copy(alpha = 0.25f) else Color(0xFF131A26))
-                                .border(1.dp, if (isSel) RoyalBlue else CardBorder, RoundedCornerShape(8.dp))
+                                .clip(KoshShapes.Chip)
+                                .background(if (isSel) RoyalBlue.copy(alpha = 0.25f) else CardBackgroundElevated)
+                                .border(0.5.dp, if (isSel) RoyalBlue else CardBorderSubtle, KoshShapes.Chip)
                                 .clickable { bankName = b }
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
                         ) {
                             Text(
                                 text = b,
@@ -200,11 +212,13 @@ fun AddPaymentInstrumentBottomSheet(
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = ElectricMint,
-                    unfocusedBorderColor = CardBorder,
+                    unfocusedBorderColor = CardBorderSubtle,
                     focusedTextColor = TextPrimary,
-                    unfocusedTextColor = TextPrimary
+                    unfocusedTextColor = TextPrimary,
+                    focusedContainerColor = CardBackgroundElevated,
+                    unfocusedContainerColor = CardBackgroundElevated
                 ),
-                shape = RoundedCornerShape(12.dp)
+                shape = KoshShapes.Input
             )
 
             // Last 4 Digits
@@ -218,11 +232,13 @@ fun AddPaymentInstrumentBottomSheet(
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = ElectricMint,
-                    unfocusedBorderColor = CardBorder,
+                    unfocusedBorderColor = CardBorderSubtle,
                     focusedTextColor = TextPrimary,
-                    unfocusedTextColor = TextPrimary
+                    unfocusedTextColor = TextPrimary,
+                    focusedContainerColor = CardBackgroundElevated,
+                    unfocusedContainerColor = CardBackgroundElevated
                 ),
-                shape = RoundedCornerShape(12.dp)
+                shape = KoshShapes.Input
             )
 
             // Credit Card Specifics: Limit, Statement Date, Due Date
@@ -237,11 +253,13 @@ fun AddPaymentInstrumentBottomSheet(
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = ElectricMint,
-                        unfocusedBorderColor = CardBorder,
+                        unfocusedBorderColor = CardBorderSubtle,
                         focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary
+                        unfocusedTextColor = TextPrimary,
+                        focusedContainerColor = CardBackgroundElevated,
+                        unfocusedContainerColor = CardBackgroundElevated
                     ),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = KoshShapes.Input
                 )
 
                 Row(
@@ -257,11 +275,13 @@ fun AddPaymentInstrumentBottomSheet(
                         modifier = Modifier.weight(1f),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = ElectricMint,
-                            unfocusedBorderColor = CardBorder,
+                            unfocusedBorderColor = CardBorderSubtle,
                             focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary
+                            unfocusedTextColor = TextPrimary,
+                            focusedContainerColor = CardBackgroundElevated,
+                            unfocusedContainerColor = CardBackgroundElevated
                         ),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = KoshShapes.Input
                     )
 
                     OutlinedTextField(
@@ -273,11 +293,13 @@ fun AddPaymentInstrumentBottomSheet(
                         modifier = Modifier.weight(1f),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = ElectricMint,
-                            unfocusedBorderColor = CardBorder,
+                            unfocusedBorderColor = CardBorderSubtle,
                             focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary
+                            unfocusedTextColor = TextPrimary,
+                            focusedContainerColor = CardBackgroundElevated,
+                            unfocusedContainerColor = CardBackgroundElevated
                         ),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = KoshShapes.Input
                     )
                 }
             }
@@ -296,13 +318,15 @@ fun AddPaymentInstrumentBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = ElectricMint),
-                shape = RoundedCornerShape(14.dp)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ElectricMint,
+                    contentColor = Color(0xFF090D14)
+                ),
+                shape = KoshShapes.Pill
             ) {
                 Text(
                     text = "Save Instrument",
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF0F141C),
                     fontSize = 14.sp
                 )
             }

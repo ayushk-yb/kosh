@@ -8,6 +8,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.kosh.app.data.model.CustomCategoryEntity
 import com.kosh.app.data.model.DeletedTransactionHashEntity
 import com.kosh.app.data.model.HouseholdObligationEntity
+import com.kosh.app.data.model.IgnoreRuleEntity
 import com.kosh.app.data.model.PaymentInstrumentEntity
 import com.kosh.app.data.model.PersonEntity
 import com.kosh.app.data.model.PersonLedgerEntity
@@ -24,9 +25,10 @@ import kotlinx.coroutines.CoroutineScope
         PersonLedgerEntity::class,
         PersonEntity::class,
         DeletedTransactionHashEntity::class,
-        CustomCategoryEntity::class
+        CustomCategoryEntity::class,
+        IgnoreRuleEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class KoshDatabase : RoomDatabase() {
@@ -39,6 +41,7 @@ abstract class KoshDatabase : RoomDatabase() {
     abstract fun personDao(): PersonDao
     abstract fun deletedTransactionHashDao(): DeletedTransactionHashDao
     abstract fun categoryDao(): CategoryDao
+    abstract fun ignoreRuleDao(): IgnoreRuleDao
 
     companion object {
         @Volatile
@@ -73,6 +76,22 @@ abstract class KoshDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_5_6 = object : androidx.room.migration.Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS ignore_rules (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        pattern TEXT NOT NULL,
+                        isWholeWord INTEGER NOT NULL DEFAULT 0,
+                        isCaseSensitive INTEGER NOT NULL DEFAULT 0,
+                        createdAt INTEGER NOT NULL DEFAULT 0
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
+
         fun getDatabase(context: Context, scope: CoroutineScope): KoshDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -80,7 +99,7 @@ abstract class KoshDatabase : RoomDatabase() {
                     KoshDatabase::class.java,
                     "kosh_treasury_database"
                 )
-                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                     .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance

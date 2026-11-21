@@ -8,11 +8,11 @@ import androidx.compose.ui.graphics.Color
 
 private val DarkColorScheme = darkColorScheme(
     primary = ElectricMint,
-    onPrimary = Color(0xFF062316),
+    onPrimary = Color(0xFF042013),
     primaryContainer = ElectricMintContainer,
     onPrimaryContainer = ElectricMint,
     secondary = AmberGold,
-    onSecondary = Color(0xFF261A00),
+    onSecondary = Color(0xFF241400),
     secondaryContainer = AmberGoldContainer,
     onSecondaryContainer = AmberGold,
     tertiary = RoyalBlue,
@@ -22,7 +22,8 @@ private val DarkColorScheme = darkColorScheme(
     onSurface = TextPrimary,
     surfaceVariant = CardBackground,
     onSurfaceVariant = TextSecondary,
-    outline = CardBorder
+    outline = CardBorder,
+    outlineVariant = CardBorderSubtle
 )
 
 @Composable
@@ -33,6 +34,7 @@ fun KoshTheme(
     MaterialTheme(
         colorScheme = DarkColorScheme,
         typography = Typography,
+        shapes = Shapes,
         content = content
     )
 }

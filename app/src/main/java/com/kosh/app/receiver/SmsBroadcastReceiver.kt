@@ -50,9 +50,7 @@ class SmsBroadcastReceiver : BroadcastReceiver() {
                         if (!last4.isNullOrBlank()) {
                             val existing = db.paymentInstrumentDao().getByLast4(last4)
                             if (existing == null) {
-                                val lower = body.lowercase()
-                                val isCreditCard = (lower.contains("credit card") || lower.contains("card ending") || lower.contains("card xx") || lower.contains("card no")) &&
-                                                   !lower.contains("credited") && !lower.contains("a/c") && !lower.contains("account")
+                                val isCreditCard = SmsAutoScanner.isCreditCard(body)
 
                                 db.paymentInstrumentDao().insertInstrument(
                                     com.kosh.app.data.model.PaymentInstrumentEntity(

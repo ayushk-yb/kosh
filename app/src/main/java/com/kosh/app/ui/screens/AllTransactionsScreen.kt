@@ -46,10 +46,16 @@ import com.kosh.app.data.model.Currency
 import com.kosh.app.data.model.TransactionEntity
 import com.kosh.app.data.model.isCreditOrInflow
 import com.kosh.app.data.model.displayAmount
+import com.kosh.app.ui.components.CategoryIconTile
+import com.kosh.app.ui.components.getCategoryVisual
 import com.kosh.app.ui.theme.AmberGold
 import com.kosh.app.ui.theme.CardBackground
+import com.kosh.app.ui.theme.CardBackgroundElevated
 import com.kosh.app.ui.theme.CardBorder
+import com.kosh.app.ui.theme.CardBorderSubtle
 import com.kosh.app.ui.theme.ElectricMint
+import com.kosh.app.ui.theme.ElectricMintContainer
+import com.kosh.app.ui.theme.KoshShapes
 import com.kosh.app.ui.theme.ObsidianBg
 import com.kosh.app.ui.theme.PartnerPink
 import com.kosh.app.ui.theme.RoyalBlue
@@ -125,9 +131,9 @@ fun AllTransactionsScreen(
                 onClick = onBack,
                 modifier = Modifier
                     .size(36.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xFF162032))
-                    .border(1.dp, CardBorder, RoundedCornerShape(10.dp))
+                    .clip(KoshShapes.IconTile)
+                    .background(CardBackgroundElevated)
+                    .border(0.5.dp, CardBorderSubtle, KoshShapes.IconTile)
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -160,10 +166,10 @@ fun AllTransactionsScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(14.dp))
-                .background(SubSurface)
-                .border(1.dp, CardBorder, RoundedCornerShape(14.dp))
-                .padding(horizontal = 14.dp, vertical = 10.dp)
+                .clip(KoshShapes.Input)
+                .background(CardBackgroundElevated)
+                .border(0.5.dp, CardBorderSubtle, KoshShapes.Input)
+                .padding(horizontal = 14.dp, vertical = 12.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -230,21 +236,21 @@ fun AllTransactionsScreen(
                 val isSelected = selectedFilter == filter
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(if (isSelected) ElectricMint else Color(0xFF162032))
+                        .clip(KoshShapes.Chip)
+                        .background(if (isSelected) ElectricMintContainer else CardBackgroundElevated)
                         .border(
-                            1.dp,
-                            if (isSelected) ElectricMint else CardBorder,
-                            RoundedCornerShape(10.dp)
+                            0.5.dp,
+                            if (isSelected) ElectricMint.copy(alpha = 0.5f) else CardBorderSubtle,
+                            KoshShapes.Chip
                         )
                         .clickable { selectedFilter = filter }
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                        .padding(horizontal = 14.dp, vertical = 7.dp)
                 ) {
                     Text(
                         text = label,
                         fontSize = 11.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                        color = if (isSelected) Color(0xFF0F141C) else TextSecondary
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                        color = if (isSelected) TextPrimary else TextSecondary
                     )
                 }
             }
@@ -256,10 +262,10 @@ fun AllTransactionsScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color(0xFF131A26))
-                .border(1.dp, CardBorder.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
-                .padding(horizontal = 14.dp, vertical = 8.dp),
+                .clip(KoshShapes.SubCard)
+                .background(CardBackgroundElevated)
+                .border(0.5.dp, CardBorderSubtle, KoshShapes.SubCard)
+                .padding(horizontal = 16.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -337,9 +343,9 @@ fun AllTransactionRowItem(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(KoshShapes.SubCard)
             .background(CardBackground)
-            .border(1.dp, CardBorder.copy(alpha = 0.6f), RoundedCornerShape(16.dp))
+            .border(0.5.dp, CardBorderSubtle, KoshShapes.SubCard)
             .clickable { onClick() }
             .padding(14.dp)
     ) {
@@ -353,41 +359,16 @@ fun AllTransactionRowItem(
                 modifier = Modifier.weight(1f)
             ) {
                 val isCredit = transaction.isCreditOrInflow()
-                // Category Icon Indicator
-                Box(
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clip(CircleShape)
-                        .background(
-                            when {
-                                isCredit -> ElectricMint.copy(alpha = 0.2f)
-                                transaction.isAssetWealth -> RoyalBlue.copy(alpha = 0.2f)
-                                transaction.hasSplit -> AmberGold.copy(alpha = 0.2f)
-                                transaction.category.contains("PARTNER", ignoreCase = true) -> PartnerPink.copy(alpha = 0.2f)
-                                transaction.category.contains("GIFT", ignoreCase = true) -> Color(0xFFF472B6).copy(alpha = 0.2f)
-                                else -> ElectricMint.copy(alpha = 0.15f)
-                            }
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = when {
-                            isCredit -> "💰"
-                            transaction.isAssetWealth -> "📈"
-                            transaction.hasSplit -> "👥"
-                            transaction.category.contains("CAB", ignoreCase = true) -> "🚕"
-                            transaction.category.contains("GIFT", ignoreCase = true) -> "🎁"
-                            transaction.category.contains("PARTNER", ignoreCase = true) -> "👨‍👩‍👧"
-                            transaction.category.contains("COOK", ignoreCase = true) -> "🍳"
-                            transaction.category.contains("FOOD", ignoreCase = true) || transaction.category.contains("GROCERIES", ignoreCase = true) -> "🛒"
-                            transaction.category.contains("RENT", ignoreCase = true) -> "🏠"
-                            transaction.category.contains("UTILITIES", ignoreCase = true) -> "⚡"
-                            transaction.category.contains("SHOPPING", ignoreCase = true) -> "🛍️"
-                            else -> "💳"
-                        },
-                        fontSize = 18.sp
-                    )
-                }
+                CategoryIconTile(
+                    categoryKeyOrName = when {
+                        isCredit -> "CREDIT"
+                        transaction.isAssetWealth -> "WEALTH"
+                        transaction.hasSplit -> "SPLIT"
+                        else -> transaction.category
+                    },
+                    size = 38.dp,
+                    iconSize = 18.dp
+                )
 
                 Spacer(modifier = Modifier.width(12.dp))
 
@@ -409,20 +390,21 @@ fun AllTransactionRowItem(
                         val badgeColor = if (isFamily) ElectricMint else PartnerPink
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(badgeColor.copy(alpha = 0.18f))
-                                .padding(horizontal = 4.dp, vertical = 1.dp)
+                                .clip(KoshShapes.Chip)
+                                .background(badgeColor.copy(alpha = 0.15f))
+                                .border(0.5.dp, badgeColor.copy(alpha = 0.3f), KoshShapes.Chip)
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
                             val tagText = when {
                                 transaction.note.isNotBlank() && !transaction.note.startsWith("Auto-parsed") -> {
                                     when {
-                                        transaction.note.startsWith("Partner: ") -> "❤️ " + transaction.note
-                                        transaction.note.startsWith("Family: ") -> "👨‍👩‍👧 " + transaction.note
+                                        transaction.note.startsWith("Partner: ") -> transaction.note
+                                        transaction.note.startsWith("Family: ") -> transaction.note
                                         else -> transaction.note
                                     }
                                 }
-                                isFamily -> "👨‍👩‍👧 Family Expense"
-                                else -> "❤️ Partner & Family"
+                                isFamily -> "Family Expense"
+                                else -> "Partner & Family"
                             }
                             Text(
                                 text = tagText,
@@ -434,15 +416,16 @@ fun AllTransactionRowItem(
                     } else if (transaction.category.contains("GIFT", ignoreCase = true) || transaction.note.startsWith("Gift")) {
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(Color(0xFFF472B6).copy(alpha = 0.18f))
-                                .padding(horizontal = 4.dp, vertical = 1.dp)
+                                .clip(KoshShapes.Chip)
+                                .background(Color(0xFFF472B6).copy(alpha = 0.15f))
+                                .border(0.5.dp, Color(0xFFF472B6).copy(alpha = 0.3f), KoshShapes.Chip)
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
                             val tagText = when {
                                 transaction.note.isNotBlank() && !transaction.note.startsWith("Auto-parsed") -> {
-                                    if (transaction.note.startsWith("🎁")) transaction.note else "🎁 ${transaction.note}"
+                                    if (transaction.note.startsWith("🎁 ")) transaction.note.removePrefix("🎁 ") else transaction.note
                                 }
-                                else -> "🎁 Gift"
+                                else -> "Gift"
                             }
                             Text(
                                 text = tagText,

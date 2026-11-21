@@ -50,15 +50,22 @@ import com.kosh.app.data.model.SplitDebtEntity
 import com.kosh.app.data.model.TransactionEntity
 import com.kosh.app.ui.components.SettlePersonBottomSheet
 import com.kosh.app.ui.theme.AmberGold
+import com.kosh.app.ui.theme.AmberGoldContainer
 import com.kosh.app.ui.theme.CardBackground
+import com.kosh.app.ui.theme.CardBackgroundElevated
 import com.kosh.app.ui.theme.CardBorder
+import com.kosh.app.ui.theme.CardBorderSubtle
+import com.kosh.app.ui.theme.CardBorderFocused
 import com.kosh.app.ui.theme.ElectricMint
+import com.kosh.app.ui.theme.ElectricMintContainer
+import com.kosh.app.ui.theme.KoshShapes
 import com.kosh.app.ui.theme.ObsidianBg
 import com.kosh.app.ui.theme.PartnerPink
 import com.kosh.app.ui.theme.RoyalBlue
 import com.kosh.app.ui.theme.TextMuted
 import com.kosh.app.ui.theme.TextPrimary
 import com.kosh.app.ui.theme.TextSecondary
+import com.kosh.app.ui.theme.Typography
 
 @Composable
 fun PendingInScreen(
@@ -115,7 +122,7 @@ fun PendingInScreen(
                     }
                 }
 
-                // Symmetrical, perfectly aligned 3-action row with uniform 36.dp height
+                // Unified 3-Action Row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -126,9 +133,9 @@ fun PendingInScreen(
                         modifier = Modifier
                             .weight(1f)
                             .height(36.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0xFF1E293B))
-                            .border(1.dp, ElectricMint.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                            .clip(KoshShapes.Chip)
+                            .background(CardBackgroundElevated)
+                            .border(0.5.dp, CardBorderSubtle, KoshShapes.Chip)
                             .clickable { onOpenAddPerson() },
                         contentAlignment = Alignment.Center
                     ) {
@@ -139,15 +146,15 @@ fun PendingInScreen(
                             Icon(
                                 imageVector = Icons.Default.PersonAdd,
                                 contentDescription = "Add Person",
-                                tint = ElectricMint,
-                                modifier = Modifier.size(15.dp)
+                                tint = TextSecondary,
+                                modifier = Modifier.size(14.dp)
                             )
-                            Spacer(modifier = Modifier.width(4.dp))
+                            Spacer(modifier = Modifier.width(5.dp))
                             Text(
-                                text = "+ Person",
+                                text = "Person",
                                 fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = ElectricMint
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextPrimary
                             )
                         }
                     }
@@ -155,11 +162,11 @@ fun PendingInScreen(
                     // 2. Match Split
                     Box(
                         modifier = Modifier
-                            .weight(1f)
+                            .weight(1.1f)
                             .height(36.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0xFF1E293B))
-                            .border(1.dp, CardBorder, RoundedCornerShape(12.dp))
+                            .clip(KoshShapes.Chip)
+                            .background(CardBackgroundElevated)
+                            .border(0.5.dp, CardBorderSubtle, KoshShapes.Chip)
                             .clickable { onMatchSplit() },
                         contentAlignment = Alignment.Center
                     ) {
@@ -170,26 +177,27 @@ fun PendingInScreen(
                             Icon(
                                 imageVector = Icons.Default.Check,
                                 contentDescription = "Match",
-                                tint = ElectricMint,
-                                modifier = Modifier.size(15.dp)
+                                tint = TextSecondary,
+                                modifier = Modifier.size(14.dp)
                             )
-                            Spacer(modifier = Modifier.width(4.dp))
+                            Spacer(modifier = Modifier.width(5.dp))
                             Text(
                                 text = "Match Split",
                                 fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = ElectricMint
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextPrimary
                             )
                         }
                     }
 
-                    // 3. Record Split
+                    // 3. Record Split (Primary action)
                     Box(
                         modifier = Modifier
-                            .weight(1.1f)
+                            .weight(1.2f)
                             .height(36.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(AmberGold)
+                            .clip(KoshShapes.Chip)
+                            .background(ElectricMintContainer)
+                            .border(0.5.dp, CardBorderFocused, KoshShapes.Chip)
                             .clickable { onOpenAddIou() },
                         contentAlignment = Alignment.Center
                     ) {
@@ -200,7 +208,7 @@ fun PendingInScreen(
                             Icon(
                                 imageVector = Icons.Default.Add,
                                 contentDescription = "Record Split",
-                                tint = Color(0xFF0F141C),
+                                tint = ElectricMint,
                                 modifier = Modifier.size(15.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
@@ -208,7 +216,7 @@ fun PendingInScreen(
                                 text = "Record Split",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF0F141C)
+                                color = ElectricMint
                             )
                         }
                     }
@@ -221,32 +229,28 @@ fun PendingInScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(26.dp))
-                    .background(
-                        Brush.linearGradient(
-                            listOf(Color(0xFF261908), Color(0xFF131924))
-                        )
-                    )
-                    .border(1.dp, AmberGold.copy(alpha = 0.35f), RoundedCornerShape(26.dp))
-                    .padding(20.dp)
+                    .clip(KoshShapes.CardHero)
+                    .background(CardBackground)
+                    .border(0.5.dp, CardBorder, KoshShapes.CardHero)
+                    .padding(22.dp)
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "Total Owed Back to You",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = AmberGold
+                        text = "TOTAL OWED BACK TO YOU",
+                        style = Typography.labelSmall,
+                        color = AmberGold,
+                        letterSpacing = 1.sp
                     )
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = "${currency.symbol}${totalReceivables.toInt()}",
-                        fontSize = 34.sp,
-                        fontWeight = FontWeight.Black,
+                        style = Typography.displayMedium,
                         color = TextPrimary
                     )
                     Text(
-                        text = "Across ${personLedgers.filter { it.relationshipType != "MERCHANT" }.size} people & ${merchantRefunds.size} pending merchant return. Independent of calendar months.",
+                        text = "Across ${personLedgers.filter { it.relationshipType != "MERCHANT" }.size} people & ${merchantRefunds.size} pending merchant return.",
                         fontSize = 12.sp,
-                        color = TextSecondary,
+                        color = TextMuted,
                         lineHeight = 16.sp
                     )
                 }
@@ -260,9 +264,9 @@ fun PendingInScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(22.dp))
-                        .background(Color(0xFF131A26))
-                        .border(1.dp, CardBorder, RoundedCornerShape(22.dp))
+                        .clip(KoshShapes.Card)
+                        .background(CardBackground)
+                        .border(0.5.dp, CardBorderSubtle, KoshShapes.Card)
                         .padding(24.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -273,7 +277,7 @@ fun PendingInScreen(
                         Text(
                             text = "No Pending Receivables",
                             fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.SemiBold,
                             color = TextPrimary
                         )
                         Text(
@@ -283,41 +287,59 @@ fun PendingInScreen(
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                             lineHeight = 18.sp
                         )
+                        Spacer(modifier = Modifier.height(4.dp))
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            OutlinedButton(
-                                onClick = onOpenAddPerson,
-                                shape = RoundedCornerShape(12.dp),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, ElectricMint.copy(alpha = 0.5f))
+                            Box(
+                                modifier = Modifier
+                                    .clip(KoshShapes.Pill)
+                                    .background(CardBackgroundElevated)
+                                    .border(0.5.dp, CardBorderSubtle, KoshShapes.Pill)
+                                    .clickable { onOpenAddPerson() }
+                                    .padding(horizontal = 14.dp, vertical = 8.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.PersonAdd,
-                                    contentDescription = null,
-                                    tint = ElectricMint,
-                                    modifier = Modifier.size(15.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = "+ Person",
-                                    color = ElectricMint,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.PersonAdd,
+                                        contentDescription = null,
+                                        tint = TextSecondary,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "+ Person",
+                                        color = TextPrimary,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
                             }
 
-                            Button(
-                                onClick = onOpenAddIou,
-                                colors = ButtonDefaults.buttonColors(containerColor = AmberGold),
-                                shape = RoundedCornerShape(12.dp)
+                            Box(
+                                modifier = Modifier
+                                    .clip(KoshShapes.Pill)
+                                    .background(ElectricMintContainer)
+                                    .border(0.5.dp, CardBorderFocused, KoshShapes.Pill)
+                                    .clickable { onOpenAddIou() }
+                                    .padding(horizontal = 14.dp, vertical = 8.dp)
                             ) {
-                                Text(
-                                    text = "+ Record Split",
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF0F141C),
-                                    fontSize = 12.sp
-                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.Add,
+                                        contentDescription = null,
+                                        tint = ElectricMint,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "Record Split",
+                                        fontWeight = FontWeight.Bold,
+                                        color = ElectricMint,
+                                        fontSize = 12.sp
+                                    )
+                                }
                             }
                         }
                     }
